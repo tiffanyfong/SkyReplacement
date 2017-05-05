@@ -1,0 +1,196 @@
+﻿Build started 2011.02.17. 0:19:54.
+     1>Project "D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\assn1.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\assn1.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"jpeg/windows-src" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D USE_JPEG /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /wd4996 /wd4267 /analyze- /errorReport:prompt imgpro.cpp R2Image.cpp R2Pixel.cpp svd.cpp R2\R2Distance.cpp R2\R2Line.cpp R2\R2Point.cpp R2\R2Segment.cpp R2\R2Vector.cpp
+         R2Vector.cpp
+         R2Segment.cpp
+         R2Point.cpp
+         R2Line.cpp
+         R2Distance.cpp
+         svd.cpp
+         R2Pixel.cpp
+         R2Image.cpp
+         imgpro.cpp
+         Generating Code...
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"jpeg/windows-src" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D USE_JPEG /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TC /wd4996 /wd4267 /analyze- /errorReport:prompt jpeg\jcapimin.c jpeg\jcapistd.c jpeg\jccoefct.c jpeg\jccolor.c jpeg\jcdctmgr.c jpeg\jchuff.c jpeg\jcinit.c jpeg\jcmainct.c jpeg\jcmarker.c jpeg\jcmaster.c jpeg\jcomapi.c jpeg\jcparam.c jpeg\jcphuff.c jpeg\jcprepct.c jpeg\jcsample.c jpeg\jctrans.c jpeg\jdapimin.c jpeg\jdapistd.c jpeg\jdatadst.c jpeg\jdatasrc.c jpeg\jdcoefct.c jpeg\jdcolor.c jpeg\jddctmgr.c jpeg\jdhuff.c jpeg\jdinput.c jpeg\jdmainct.c jpeg\jdmarker.c jpeg\jdmaster.c jpeg\jdmerge.c jpeg\jdphuff.c jpeg\jdpostct.c jpeg\jdsample.c jpeg\jdtrans.c jpeg\jerror.c jpeg\jfdctflt.c jpeg\jfdctfst.c jpeg\jfdctint.c jpeg\jidctflt.c jpeg\jidctfst.c jpeg\jidctint.c jpeg\jidctred.c jpeg\jmemmgr.c jpeg\jmemnobs.c jpeg\jquant1.c jpeg\jquant2.c jpeg\jutils.c
+         jutils.c
+         jquant2.c
+         jquant1.c
+         jmemnobs.c
+         jmemmgr.c
+         jidctred.c
+         jidctint.c
+         jidctfst.c
+         jidctflt.c
+         jfdctint.c
+         jfdctfst.c
+         jfdctflt.c
+         jerror.c
+         jdtrans.c
+         jdsample.c
+         jdpostct.c
+         jdphuff.c
+         jdmerge.c
+         jdmaster.c
+         jdmarker.c
+         Generating Code...
+         Compiling...
+         jdmainct.c
+         jdinput.c
+         jdhuff.c
+         jddctmgr.c
+         jdcolor.c
+         jdcoefct.c
+         jdatasrc.c
+         jdatadst.c
+         jdapistd.c
+         jdapimin.c
+         jctrans.c
+         jcsample.c
+         jcprepct.c
+         jcphuff.c
+         jcparam.c
+         jcomapi.c
+         jcmaster.c
+         jcmarker.c
+         jcmainct.c
+         jcinit.c
+         Generating Code...
+         Compiling...
+         jchuff.c
+         jcdctmgr.c
+         jccolor.c
+         jccoefct.c
+         jcapistd.c
+         jcapimin.c
+         Generating Code...
+       ManifestResourceCompile:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Debug\imgpro.exe.embed.manifest.res" Debug\imgpro_manifest.rc 
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Debug\imgpro.exe" /INCREMENTAL /NOLOGO jpeg/libjpeg.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /NODEFAULTLIB:libcmtd /MANIFEST /ManifestFile:"Debug\imgpro.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\Debug\imgpro.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\Debug\imgpro.lib" /MACHINE:X86 Debug\imgpro.exe.embed.manifest.res
+         Debug\imgpro.obj
+         Debug\R2Image.obj
+         Debug\R2Pixel.obj
+         Debug\svd.obj
+         Debug\R2Distance.obj
+         Debug\R2Line.obj
+         Debug\R2Point.obj
+         Debug\R2Segment.obj
+         Debug\R2Vector.obj
+         Debug\jcapimin.obj
+         Debug\jcapistd.obj
+         Debug\jccoefct.obj
+         Debug\jccolor.obj
+         Debug\jcdctmgr.obj
+         Debug\jchuff.obj
+         Debug\jcinit.obj
+         Debug\jcmainct.obj
+         Debug\jcmarker.obj
+         Debug\jcmaster.obj
+         Debug\jcomapi.obj
+         Debug\jcparam.obj
+         Debug\jcphuff.obj
+         Debug\jcprepct.obj
+         Debug\jcsample.obj
+         Debug\jctrans.obj
+         Debug\jdapimin.obj
+         Debug\jdapistd.obj
+         Debug\jdatadst.obj
+         Debug\jdatasrc.obj
+         Debug\jdcoefct.obj
+         Debug\jdcolor.obj
+         Debug\jddctmgr.obj
+         Debug\jdhuff.obj
+         Debug\jdinput.obj
+         Debug\jdmainct.obj
+         Debug\jdmarker.obj
+         Debug\jdmaster.obj
+         Debug\jdmerge.obj
+         Debug\jdphuff.obj
+         Debug\jdpostct.obj
+         Debug\jdsample.obj
+         Debug\jdtrans.obj
+         Debug\jerror.obj
+         Debug\jfdctflt.obj
+         Debug\jfdctfst.obj
+         Debug\jfdctint.obj
+         Debug\jidctflt.obj
+         Debug\jidctfst.obj
+         Debug\jidctint.obj
+         Debug\jidctred.obj
+         Debug\jmemmgr.obj
+         Debug\jmemnobs.obj
+         Debug\jquant1.obj
+         Debug\jquant2.obj
+         Debug\jutils.obj
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Debug\imgpro.exe.embed.manifest" /manifest Debug\imgpro.exe.intermediate.manifest
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Debug\imgpro.exe.embed.manifest.res" Debug\imgpro_manifest.rc 
+       LinkEmbedManifest:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Debug\imgpro.exe" /INCREMENTAL /NOLOGO jpeg/libjpeg.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /NODEFAULTLIB:libcmtd /MANIFEST /ManifestFile:"Debug\imgpro.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\Debug\imgpro.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\Debug\imgpro.lib" /MACHINE:X86 Debug\imgpro.exe.embed.manifest.res
+         Debug\imgpro.obj
+         Debug\R2Image.obj
+         Debug\R2Pixel.obj
+         Debug\svd.obj
+         Debug\R2Distance.obj
+         Debug\R2Line.obj
+         Debug\R2Point.obj
+         Debug\R2Segment.obj
+         Debug\R2Vector.obj
+         Debug\jcapimin.obj
+         Debug\jcapistd.obj
+         Debug\jccoefct.obj
+         Debug\jccolor.obj
+         Debug\jcdctmgr.obj
+         Debug\jchuff.obj
+         Debug\jcinit.obj
+         Debug\jcmainct.obj
+         Debug\jcmarker.obj
+         Debug\jcmaster.obj
+         Debug\jcomapi.obj
+         Debug\jcparam.obj
+         Debug\jcphuff.obj
+         Debug\jcprepct.obj
+         Debug\jcsample.obj
+         Debug\jctrans.obj
+         Debug\jdapimin.obj
+         Debug\jdapistd.obj
+         Debug\jdatadst.obj
+         Debug\jdatasrc.obj
+         Debug\jdcoefct.obj
+         Debug\jdcolor.obj
+         Debug\jddctmgr.obj
+         Debug\jdhuff.obj
+         Debug\jdinput.obj
+         Debug\jdmainct.obj
+         Debug\jdmarker.obj
+         Debug\jdmaster.obj
+         Debug\jdmerge.obj
+         Debug\jdphuff.obj
+         Debug\jdpostct.obj
+         Debug\jdsample.obj
+         Debug\jdtrans.obj
+         Debug\jerror.obj
+         Debug\jfdctflt.obj
+         Debug\jfdctfst.obj
+         Debug\jfdctint.obj
+         Debug\jidctflt.obj
+         Debug\jidctfst.obj
+         Debug\jidctint.obj
+         Debug\jidctred.obj
+         Debug\jmemmgr.obj
+         Debug\jmemnobs.obj
+         Debug\jquant1.obj
+         Debug\jquant2.obj
+         Debug\jutils.obj
+         assn1.vcxproj -> D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\Debug\imgpro.exe
+       FinalizeBuildStatus:
+         Deleting file "Debug\assn1.unsuccessfulbuild".
+         Touching "Debug\assn1.lastbuildstate".
+     1>Done Building Project "D:\Documents\AIT\course2011Spring\skeleton_code_empty\computer_vision_hw\src\assn1.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:12.63
