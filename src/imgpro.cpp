@@ -283,70 +283,66 @@ main(int argc, char **argv)
       argv += 2, argc -= 2;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string numberA = "0000002"; // padding = 7 digits
-      std::string numberB = "0000003";
+
+      std::string number = "0000002"; // padding = 7 digits
+      const int height = image->Height();
+      const double sigma = 2.0;
+      const int numFeatures = 150;
+      const int sqRadius = 4;
+      int xa, xb, ya, yb;
 
       // image = first frame
-      // std::vector<int> featuresA = image->getFeaturePositions(2.0, 150, 4);
-      // image->SetSkyFeatures(featuresA);
-
+      // std::vector<int> featuresA = image->getFeaturePositions(sigma, numFeatures, sqRadius);
       std::vector<int> featuresA = {995987,824627,743595,975604,875383,1388169,828212,1509147,827975,1032845,828224,1147327,1505890,1511158,998283,850545,744816,1390194,618140,746506,826773,977627,617985,829998,1433024,828586,746659,892542,742893,1312434,742903,1164471,888265,1389268,881749,1123759,1112766,829118,1267911,829965,848546,878534,847417,1308248,1147192,1122816,743807,98829,828741,696218,1311505,742869,829977,902226,852692,621506,1140344,1231187,860266,1005981,741953,619202,133396,1286290,1120914,871046,1432778,1156006,1482525,848736,828724,828199,1465929,1099806,745489,854755,1156154,887044,1247391,742880,1120709,1233918,1154377,744666,828188,1269559,876503,830040,688897,1133481,840604,872037,957244,1269697,727781,217613,1432637,745588,883918,840723,1969385,93835,1451466,89109,2046396,1970401,2046483,566056,1434232,827189,938884,2046414,1971352,2044150,1434143,1235377,1184241,217436,1451422,621311,830813,2066783,902258,829986,1970449,827233,867705,679172,880730,871923,842971,640802,621567,2045281,657168,1166762,924937,744803,1468109,1452590,877410,829956,110083,850578,1245607,1970417,895877,1484309,848357,933473};
       image->SetSkyFeatures(featuresA);
 
-      // std::cout<<"\n\nORIG IMAGE FEAUTRESU\n";
-
       // imageA = second frame
-      const char * filename = ("/Users/tmf/Desktop/skeleton/testSequence/test"+ numberA + ".jpg").c_str();
-      R2Image *imageA = new R2Image(filename);
+      const char * filename = ("/Users/tmf/Desktop/skeleton/testSequence/test"+ number + ".jpg").c_str();
+      R2Image *imageB = new R2Image(filename);
 
-    
-      std::vector<int> featuresB = image->findAFeaturesOnB(imageA, image->SkyFeatures(), 4);
-      imageA->SetSkyFeatures(featuresB);
+      // std::vector<int> featuresB = image->findAFeaturesOnB(imageA, image->SkyFeatures(), sqRadius);
+      std::vector<int> featuresB = {995987,824627,743595,975604,875383,1388169,828212,1509147,827975,1032845,828224,1147327,1505890,1511158,998283,850545,744816,1390194,618140,746506,826773,977627,617985,829998,1433024,828586,746659,892542,742893,1312434,742903,1164471,888265,1389268,881749,1123759,1112766,829118,1267911,829965,848546,878534,847417,1308248,1147192,1122816,743807,98829,828741,696218,1311505,742869,829977,902227,852692,621506,1140344,1231187,860266,1005981,741953,619202,133396,1286290,1120914,871046,1432778,1156006,1482525,848736,828724,828199,1465929,1099806,745489,854756,1156154,887044,1247391,742880,1120709,1233918,1154377,744666,828188,1269559,876503,830040,688897,1133481,840604,872037,957244,1269697,727781,217613,1432637,745588,883918,840723,1969385,93835,1451466,89109,2046396,1970401,2046483,566056,1434232,827189,938884,2046414,1971352,2044150,1434143,1235377,1184241,217436,1451422,621311,830813,2066783,902258,829986,1970449,827233,867705,679172,880730,871923,842971,640802,621567,2045281,657168,1166762,924937,744803,1468109,1452590,877410,829956,110083,850578,1245607,1970417,895877,1484309,848357,933473};
+      imageB->SetSkyFeatures(featuresB);
 
-      for (int f : featuresB) {
-        std::cout<<f<<",";
-      }
-
-      std::cout<<"IMAGE 2 FEATURES\n";
+      printf("Tracked features from frame1 to frame2\n");
 
       // TODO deleting images deletes the feature positions as well (may need to calc H)
-
-      // const char * filenameB = ("/Users/tmf/Desktop/skeleton/testSequence/test"+ numberB + ".jpg").c_str();
-      R2Image *imageB;
-
-      int xa, ya, xb, yb;
-
-      std::cout<<"BEFORE THE LOOP\n";
+      R2Image *imageA;
 
       // iterate through frames
-      for (int i = 3; i < 6; i++) {
-        const char * filenameB = ("/Users/tmf/Desktop/skeleton/testSequence/test"+ numberB + ".jpg").c_str();
+      // imageA = frame(i-1)
+      // imageB = frame(i)
+
+      // for (int i = 3; i <= numFrames; i++) {
+      for (int i = 3; i <= numFrames; i++) {
+        // SETUP
+        // copy imageB into imageA
+        imageA = imageB;
+
+        // Calculate new imageB
+        number = "0000000" + std::to_string(i);
+        number = number.substr(number.length()-7);
+
+        const char * filenameB = ("/Users/tmf/Desktop/skeleton/testSequence/test"+ number + ".jpg").c_str();
         imageB = new R2Image(filenameB);
 
-        // WE HAVE IMAGES 2 AND 3. TRACK
-        featuresB = imageA->findAFeaturesOnB(imageB, imageA->SkyFeatures(), 4);
+        // Track features from frame(i-1) to frame(i)
+        featuresB = imageA->findAFeaturesOnB(imageB, imageA->SkyFeatures(), sqRadius);
         imageB->SetSkyFeatures(featuresB);
 
+        
         // draw features in input image
-        for (int j = 0; j < 150; j++) {
-          xa = imageA->SkyFeatures().at(j) / image->Height();
-          ya = imageA->SkyFeatures().at(j) % image->Height();
-          xb = featuresB.at(j) / image->Height();
-          yb = featuresB.at(j) % image->Height();
+        for (int j = 0; j < numFeatures; j++) {
+          xa = imageA->SkyFeatures().at(j) / height;
+          ya = imageA->SkyFeatures().at(j) % height;
+          xb = featuresB.at(j) / height;
+          yb = featuresB.at(j) % height;
 
           // Add motion vectors (RED)
           image->line(xa,xb,ya,yb,1,0,0);
         }
 
-        printf("%d: Motion vector added\n", i);
-
-        // SETUP FOR NEXT LOOP
-        // copy imageB into imageA
-        imageA = imageB;
-
-        // Calculate new imageB
-        numberB = "0000000" + std::to_string(i);
-        numberB = numberB.substr(numberB.length()-7);
+        printf("Tracked features from frame%d to frame%d\n", i-1, i);
       }
 
       delete imageA;

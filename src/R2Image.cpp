@@ -1201,175 +1201,6 @@ blendOtherImageHomography(R2Image * imageB)
  *this = outputImage;
 }
 
-void R2Image::
-SkyFrameProcess(int i, R2Image * imageA, R2Image * imageB)
-{
-  const double sigma = 2.0;
-  const int numFeatures = 150;
-  const int sqRadius = 4;
-  imageA->SkyCalculateFeaturePositions(sigma, numFeatures, sqRadius);
-
-  printf("YAY\n");
-
-
-  // thisimage = where we put all the markers
-  // imageA = before
-  // imageB = after
-
-  // track features
-
-
-  // ransac
-// }
-
-// void R2Image::
-// SkyRANSAC(R2Image * imageB) 
-// {
-  // ensure imageA has features
-  std::vector<int> featuresA = imageA->SkyFeatures();
-
-
-  // Find A's features on imageB
-  std::vector<int> featuresB = imageA->findAFeaturesOnB(imageB, featuresA, sqRadius);
-
-  const int minInliers = numFeatures*1/3;
-  const int numTrials = 700;
-  const int distThreshold = 4; // pixels
-
-  // Set up random number generator
-  std::random_device rd; 
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dis(0, numFeatures-1);
-  std::vector<int> randIndexes;
-
-  int r, count;
-  int bestNumInliers = 0;
-  bool inliers[numFeatures];
-  bool temp[numFeatures];
-
-  // #correspondences
-  const int n = 4;
-  double H[3][3];
-  std::vector<R2Point> tracksA;
-  std::vector<R2Point> tracksB;
-
-  // loop to find best H
-  for (int trial = 0; trial < numTrials; trial++) {
-    tracksA.clear();
-    tracksB.clear();
-    randIndexes.clear();
-    count = 0;
-
-    // randomly pick 4 points
-    for (int i = 0; i < n; i++) {
-      do {
-        r = dis(gen);
-      } while (std::find(randIndexes.begin(), randIndexes.end(), r) != randIndexes.end());
-      randIndexes.push_back(r);
-      tracksA.push_back(R2Point(featuresA.at(r)/height, featuresA.at(r)%height)); 
-      tracksB.push_back(R2Point(featuresB.at(r)/height, featuresB.at(r)%height));
-    }
-
-    HomoEstimate(H, tracksA, tracksB, n);
-
-    // count inliers based on H
-    for (int i = 0; i < numFeatures; i++) {
-      int fA_x = featuresA.at(i)/height;
-      int fA_y = featuresA.at(i)%height;
-      int fB = featuresB.at(i);
-
-      // matrix multiplication with H
-      double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
-      double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
-
-      // todo: keep the shear factor to normalize z=1?
-      double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
-      HfA_x /= HfA_z;
-      HfA_y /= HfA_z;
-
-      temp[i] = fabs(HfA_x - fB/height) <= distThreshold && 
-          fabs(HfA_y - fB%height) <= distThreshold;// ? 1 : 0;
-
-      if (temp[i])// == 1)
-        count++;
-    }
-
-    // update bestH
-    if (count < minInliers) {
-      trial--; // repeat the process if below the minInlier threshold
-    }
-    else if (count > bestNumInliers) {
-      bestNumInliers = count;
-
-      for (int i = 0; i < numFeatures; i++)
-        inliers[i] = temp[i];
-    }
-  }
-
-}
-
-void R2Image::
-SkyCalculateFeaturePositions(const double sigma, const int numFeatures, const int sqRadius)
-{
-  R2Image tempThis = *this;
-  tempThis.Harris(sigma);
-
-  // Find features with high corner score
-  // ensure features are separated
-
-  // higher r+g+b value -> whiter -> higher corner score
-
-  // <r+g+b value, location> sorted descending
-  std::vector< std::pair<double, int> > values;
-
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      values.push_back( std::pair<double, int>(
-          tempThis.Pixel(x,y).Red() + 
-          tempThis.Pixel(x,y).Green() + 
-          tempThis.Pixel(x,y).Blue(),
-          x*height+y) 
-      );
-    }
-  }
-
-  std::sort(values.begin(), values.end(), sortWhiteDescending());
-
-
-  // get the whitest features
-  // collects central feature pixel locations in vector
-  std::vector<int> pixelLoc;
-
-  int featureCount = 0;
-
-  for (std::pair<double, int> pr : values) {
-    int x = pr.second / height;
-    int y = pr.second % height;
-
-    // make sure pixel is far from other feature
-    if (!tempThis.Pixel(x-sqRadius, y-sqRadius).IsRed() &&
-        !tempThis.Pixel(x-sqRadius, y+sqRadius).IsRed() &&
-        !tempThis.Pixel(x+sqRadius, y-sqRadius).IsRed() &&
-        !tempThis.Pixel(x+sqRadius, y+sqRadius).IsRed()) {
-
-      pixelLoc.push_back(pr.second);
-      featureCount++;
-
-      tempThis.makeSquare(x,y,1,0,0, sqRadius);
-    }
-
-    if (featureCount >= numFeatures) {
-      break;
-    }
-  }
-}
-
-
-
-
-
-
-
 
 
 
@@ -1463,8 +1294,11 @@ getFeaturePositions(const double sigma, const int numFeatures, const int sqRadiu
 std::vector<int> R2Image::
 findAFeaturesOnB(R2Image * imageB, std::vector<int> featuresA, const int sqRadius) 
 {
-  const int searchW = width/5-sqRadius;
-  const int searchH = height/5-sqRadius;
+  /////// FOR SKYREPLACEMENT, assume small motion ///////
+  // const int searchW = width/5-sqRadius;
+  // const int searchH = height/5-sqRadius;
+  const int searchW = 50;
+  const int searchH = 50;
   std::vector<int> featuresB;
 
 

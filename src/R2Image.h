@@ -96,8 +96,6 @@ class R2Image {
   // void SkyFirstFrameProcess
   void SkyFrameProcess(int i, R2Image * imageA, R2Image * imageB);
   void SkyRANSAC(R2Image * imageB);
-  void SkyCalculateFeaturePositions(const double sigma, const int numFeatures, const int sqRadius);
-
 
   // helper functions
   bool validPixel(const int x, const int y);
