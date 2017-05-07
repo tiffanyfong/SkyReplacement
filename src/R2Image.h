@@ -106,6 +106,7 @@ class R2Image {
   // todo this is unrelated to the image
   void HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<R2Point> modified, const int n);
   void findGoodTracks(std::vector<int> featuresA, std::vector<int> featuresB, double H[3][3]);
+  void MakeSkyBlack(void);
 
   // File reading/writing
   int Read(const char *filename);

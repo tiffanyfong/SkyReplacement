@@ -1357,6 +1357,58 @@ findAFeaturesOnB(R2Image * imageB, std::vector<int> featuresA, const int sqRadiu
 }
 
 
+/*
+
+NOTES ON SKY DETECTION
+
+1. if green and red are similar and blue > (green and red), then it is "blue"
+
+
+2. "brightness" = whiteness of pixels. Sky is likely to be brighter than other things...
+
+
+make the sky black!
+
+
+*/
+void R2Image::
+MakeSkyBlack() {
+  for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) {
+      R2Pixel pix = Pixel(x,y);
+      double red = pix.Red();
+      double green = pix.Green();
+      double blue = pix.Blue();
+
+      if (x == width/2 && y == 0) {
+        printf("%f, %f, %f, %f\n", red, green, blue, pix.Alpha());
+      }
+
+// too low - reject
+      // high  - accept
+      // middle - linear function 
+
+      // if BLUEEEE
+      if (fabs(red-green) < 0.4
+        && blue > red 
+        && blue > green
+        && blue > 0.3) {
+
+        // CONSIDER BRIGHTNESS
+        double whiteness = red+green+blue;
+        if (whiteness >= 1.4 && whiteness <= 1.5) {
+          double redWeight = 10.0 * whiteness - 14.0;
+          Pixel(x,y) = R2red_pixel*redWeight+Pixel(x,y)*(1.0-redWeight);
+        }
+        else if (whiteness > 1.5) {
+          Pixel(x,y) = R2red_pixel;
+        }
+      }
+    }
+  }
+}
+
+
 
 void R2Image::
 line(int x0, int x1, int y0, int y1, float r, float g, float b)
