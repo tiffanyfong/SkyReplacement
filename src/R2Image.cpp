@@ -1202,7 +1202,105 @@ blendOtherImageHomography(R2Image * imageB)
 }
 
 
+void R2Image::
+SkyDLTRANSAC(R2Image * imageB, double H[3][3])
+{
+  // Tracks imageA's features (this) to imageB
+  // Exterminates outliers based on RANSAC
+  // Also returns the resulting H matrix
 
+  std::vector<int> featuresA = this->SkyFeatures();
+  std::vector<int> featuresB = imageB->SkyFeatures();
+
+  const int numFeatures = this->SkyFeatures().size();
+  printf("PLZ BE >= 4   %d\n", numFeatures);
+
+  const int minInliers = numFeatures/3;
+  const int numTrials = 700;
+  const int distThreshold = 5; // pixels
+
+  // Set up random number generator
+  std::random_device rd; 
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(0, numFeatures-1);
+  std::vector<int> randIndexes;
+
+  int r, count;
+  int bestNumInliers = 0;
+  bool inliers[numFeatures];
+  bool temp[numFeatures];
+
+  // #correspondences
+  const int n = 4;
+  std::vector<R2Point> tracksA;
+  std::vector<R2Point> tracksB;
+
+  // loop to find best H
+  for (int trial = 0; trial < numTrials; trial++) {
+    tracksA.clear();
+    tracksB.clear();
+    randIndexes.clear();
+    count = 0;
+
+    // randomly pick 4 points
+    for (int i = 0; i < n; i++) {
+      do {
+        r = dis(gen);
+      } while (std::find(randIndexes.begin(), randIndexes.end(), r) != randIndexes.end());
+      randIndexes.push_back(r);
+      tracksA.push_back(R2Point(featuresA.at(r)/height, featuresA.at(r)%height)); 
+      tracksB.push_back(R2Point(featuresB.at(r)/height, featuresB.at(r)%height));
+    }
+
+    HomoEstimate(H, tracksA, tracksB, n);
+
+    // count inliers based on H
+    for (int i = 0; i < numFeatures; i++) {
+      int fA_x = featuresA.at(i)/height;
+      int fA_y = featuresA.at(i)%height;
+      int fB = featuresB.at(i);
+
+      // matrix multiplication with H
+      double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
+      double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
+
+      // todo: keep the shear factor to normalize z=1?
+      double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
+      HfA_x /= HfA_z;
+      HfA_y /= HfA_z;
+
+      temp[i] = fabs(HfA_x - fB/height) <= distThreshold && 
+          fabs(HfA_y - fB%height) <= distThreshold;// ? 1 : 0;
+
+      if (temp[i])// == 1)
+        count++;
+    }
+
+    // update bestH
+    // if (count < minInliers) {
+    //   trial--; // repeat the process if below the minInlier threshold
+    // }
+    if (count > bestNumInliers) {
+      bestNumInliers = count;
+
+      for (int i = 0; i < numFeatures; i++)
+        inliers[i] = temp[i];
+    }
+  }
+
+  // DELETE outliers
+  featuresA.clear();
+  featuresB.clear();
+  for (int i = 0; i < numFeatures; i++) {
+    if (inliers[i] == 1) { // inlier
+      featuresA.push_back(this->SkyFeatures().at(i));
+      featuresB.push_back(imageB->SkyFeatures().at(i));
+    }
+  }
+
+  this->SetSkyFeatures(featuresA);
+  imageB->SetSkyFeatures(featuresB);
+}
 
 
 
@@ -1292,7 +1390,7 @@ getFeaturePositions(const double sigma, const int numFeatures, const int sqRadiu
 }
 
 std::vector<int> R2Image::
-findAFeaturesOnB(R2Image * imageB, std::vector<int> featuresA, const int sqRadius) 
+findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int sqRadius) 
 {
   /////// FOR SKYREPLACEMENT, assume small motion ///////
   // const int searchW = width/5-sqRadius;

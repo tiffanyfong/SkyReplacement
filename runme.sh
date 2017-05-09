@@ -19,8 +19,8 @@ popd
 
 # generate the result pictures
 
-# src/imgpro testSequence/test0000001.jpg testSequence/output/OUTPUT.jpg \
-# -skyReplace 147
+src/imgpro testSequence/test0000001.jpg testSequence/OUTPUTtest0000001.jpg \
+-skyReplace 10
 
 # src/imgpro THING/test0000001.jpg THING/hella.jpg \
 # -skyReplace 78
@@ -31,5 +31,5 @@ popd
 # src/imgpro testSequence/sky/boat.jpg testSequence/sky/boatRED.jpg \
 # 	-skyBlack
 
-src/imgpro testSequence/sky/bikas.jpg testSequence/sky/bikasRED.jpg \
-	-skyBlack
+# src/imgpro testSequence/sky/bikas.jpg testSequence/sky/bikasRED.jpg \
+# 	-skyBlack

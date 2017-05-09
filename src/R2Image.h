@@ -101,12 +101,14 @@ class R2Image {
   bool validPixel(const int x, const int y);
   void makeSquare(const int x, const int y, const double r, const double g, const double b, const int sqRadius);
   std::vector<int> getFeaturePositions(const double sigma, const int numFeatures, const int sqRadius);
-  std::vector<int> findAFeaturesOnB(R2Image * imageB, std::vector<int> featuresA, const int sqRadius);
+  std::vector<int> findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int sqRadius);
   void line(int x0, int x1, int y0, int y1, float r, float g, float b);
   // todo this is unrelated to the image
   void HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<R2Point> modified, const int n);
   void findGoodTracks(std::vector<int> featuresA, std::vector<int> featuresB, double H[3][3]);
   void MakeSkyBlack(void);
+  void SkyDLTRANSAC(R2Image * imageB, double H[3][3]);
+
 
   // File reading/writing
   int Read(const char *filename);
