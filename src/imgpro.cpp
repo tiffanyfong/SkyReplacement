@@ -53,6 +53,7 @@ static char options[] =
 "  -fisheye \n"
 "  -matchTranslation <file:other_image>\n"
 "  -matchHomography <file:other_image>\n"
+"  -skyBlack <int:numFrames>\n"
 "  -skyReplace <int:numFrames>\n";
 
 static void 
@@ -277,50 +278,70 @@ main(int argc, char **argv)
       image->blendOtherImageHomography(other_image);
       delete other_image;
     }
+
     else if (!strcmp(*argv, "-skyBlack")) {
-      argv++, argc--;
+      CheckOption(*argv, argc, 2);
+      const int numFrames = atoi(argv[1]);
+      argv += 2, argc -= 2;
+      printf("NUMBER OF FRAMES: %d\n", numFrames);
+
+      std::string number;
+      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
+      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/redshitOUTPUT";
+      std::string extension = ".jpg";
+      R2Image *imageB;
+
       image->MakeSkyBlack();
+
+      for (int i = 2; i <= numFrames; i++) {
+        number = "0000000" + std::to_string(i);
+        number = number.substr(number.length()-7);
+        imageB = new R2Image((inputPath + number + extension).c_str());
+
+        imageB->MakeSkyBlack();
+
+        if (!imageB->Write((outputPath + number + extension).c_str())) {
+          fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
+          exit(-1);
+        }
+        delete imageB;
+      }
     }
+
     else if (!strcmp(*argv, "-skyReplace")) {
       CheckOption(*argv, argc, 2);
       const int numFrames = atoi(argv[1]);
       argv += 2, argc -= 2;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/testSequence/test"; //"/Users/tmf/Desktop/skeleton/THING/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/testSequence/OUTPUTtest"; //"/Users/tmf/Desktop/skeleton/THING/OUTPUTtest";
+      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test"; //"/Users/tmf/Desktop/skeleton/THING/test";
+      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest"; //"/Users/tmf/Desktop/skeleton/THING/OUTPUTtest";
       std::string extension = ".jpg";
 
-      // DRAW SHIT HERE
       R2Image * outputOrigImage = new R2Image(*image);
-      // R2Image * tempImage;
 
 
       std::string number = "0000002"; // padding = 7 digits
       const int height = image->Height();
       const double sigma = 2.0;
-      const int numFeatures = 150;
-      const int sqRadius = 4;
+      const int numFeatures = 50; // 150
+      const int sqRadius = 5;
       int xa, xb, ya, yb;
 
       // image = first frame
       std::vector<int> featuresA = image->getFeaturePositions(sigma, numFeatures, sqRadius);
-      // std::vector<int> featuresA = {995987,824627,743595,975604,875383,1388169,828212,1509147,827975,1032845,828224,1147327,1505890,1511158,998283,850545,744816,1390194,618140,746506,826773,977627,617985,829998,1433024,828586,746659,892542,742893,1312434,742903,1164471,888265,1389268,881749,1123759,1112766,829118,1267911,829965,848546,878534,847417,1308248,1147192,1122816,743807,98829,828741,696218,1311505,742869,829977,902226,852692,621506,1140344,1231187,860266,1005981,741953,619202,133396,1286290,1120914,871046,1432778,1156006,1482525,848736,828724,828199,1465929,1099806,745489,854755,1156154,887044,1247391,742880,1120709,1233918,1154377,744666,828188,1269559,876503,830040,688897,1133481,840604,872037,957244,1269697,727781,217613,1432637,745588,883918,840723,1969385,93835,1451466,89109,2046396,1970401,2046483,566056,1434232,827189,938884,2046414,1971352,2044150,1434143,1235377,1184241,217436,1451422,621311,830813,2066783,902258,829986,1970449,827233,867705,679172,880730,871923,842971,640802,621567,2045281,657168,1166762,924937,744803,1468109,1452590,877410,829956,110083,850578,1245607,1970417,895877,1484309,848357,933473};
       image->SetSkyFeatures(featuresA);
 
-      // imageA = second frame
+      // imageB = second frame
       R2Image *imageB = new R2Image((inputPath + number + extension).c_str());
 
       std::vector<int> featuresB = image->findAFeaturesOnB(imageB, image->SkyFeatures(), sqRadius);
-      // std::vector<int> featuresB = {995987,824627,743595,975604,875383,1388169,828212,1509147,827975,1032845,828224,1147327,1505890,1511158,998283,850545,744816,1390194,618140,746506,826773,977627,617985,829998,1433024,828586,746659,892542,742893,1312434,742903,1164471,888265,1389268,881749,1123759,1112766,829118,1267911,829965,848546,878534,847417,1308248,1147192,1122816,743807,98829,828741,696218,1311505,742869,829977,902227,852692,621506,1140344,1231187,860266,1005981,741953,619202,133396,1286290,1120914,871046,1432778,1156006,1482525,848736,828724,828199,1465929,1099806,745489,854756,1156154,887044,1247391,742880,1120709,1233918,1154377,744666,828188,1269559,876503,830040,688897,1133481,840604,872037,957244,1269697,727781,217613,1432637,745588,883918,840723,1969385,93835,1451466,89109,2046396,1970401,2046483,566056,1434232,827189,938884,2046414,1971352,2044150,1434143,1235377,1184241,217436,1451422,621311,830813,2066783,902258,829986,1970449,827233,867705,679172,880730,871923,842971,640802,621567,2045281,657168,1166762,924937,744803,1468109,1452590,877410,829956,110083,850578,1245607,1970417,895877,1484309,848357,933473};
       imageB->SetSkyFeatures(featuresB);
 
       printf("Tracked features from frame1 to frame2\n");
 
       // Calculate H using DLTRANSAC between frame(1) and frame(2). reject bad tracks
       double H[3][3]; // TODO DONT OVERWRITE. 3D array or R2Image field?
-
-
       image->SkyDLTRANSAC(imageB, H);
 
       for (int i = 0; i < 3; i++) {
@@ -330,8 +351,9 @@ main(int argc, char **argv)
         std::cout<<"\n";
       }
 
-      // FOR THE SECOND IMAGE
-      // draw features in input image
+      R2Image *tempImage = new R2Image(*imageB);
+
+      // draw features in frame(1) and frame(2)
       for (int i = 0; i < image->SkyFeatures().size(); i++) {
         xa = image->SkyFeatures().at(i) / height;
         ya = image->SkyFeatures().at(i) % height;
@@ -340,15 +362,16 @@ main(int argc, char **argv)
 
         // Add motion vectors (RED+BLUE)
         outputOrigImage->line(xa,xa,ya,ya,1,0,1);
-        imageB->line(xb,xb,yb,yb,1,0,1);
+        tempImage->line(xb,xb,yb,yb,1,0,1);
       }
-      if (!imageB->Write((outputPath + number + extension).c_str())) {
+      if (!tempImage->Write((outputPath + number + extension).c_str())) {
         fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
         exit(-1);
       }
 
       // TODO deleting images deletes the feature positions as well (may need to calc H)
       R2Image *imageA;
+      delete tempImage;
 
       // iterate through frames
       // imageA = frame(i-1)
@@ -356,20 +379,20 @@ main(int argc, char **argv)
 
       for (int i = 3; i <= numFrames; i++) {
         // SETUP
-        // copy imageB into imageA
+        // copy imageB into imageA via operator=
         imageA = imageB;
 
         // Calculate new imageB
         number = "0000000" + std::to_string(i);
         number = number.substr(number.length()-7);
 
-        // const char * filenameB = (inputPath + number + extension).c_str();
         imageB = new R2Image((inputPath + number + extension).c_str());
+        tempImage = new R2Image(*imageB);
 
 
         // Track features from frame(i-1) to frame(i)
         featuresB.clear();
-        featuresB = image->findAFeaturesOnB(imageB, imageA->SkyFeatures(), sqRadius);
+        featuresB = imageA->findAFeaturesOnB(imageB, imageA->SkyFeatures(), sqRadius);
         imageB->SetSkyFeatures(featuresB);
 
         // CLEAR THE H
@@ -380,7 +403,7 @@ main(int argc, char **argv)
         }
 
         // Calculate H between frame(i-1) and frame(i)
-        image->SkyDLTRANSAC(imageB, H);
+        imageA->SkyDLTRANSAC(imageB, H);
 
         for (int iii = 0; iii < 3; iii++) {
           for (int kk = 0; kk < 3; kk++) {
@@ -395,30 +418,24 @@ main(int argc, char **argv)
 
         // draw features in input image
         for (int j = 0; j < featuresB.size(); j++) {
-          // xa = imageA->SkyFeatures().at(j) / height;
-          // ya = imageA->SkyFeatures().at(j) % height;
           xb = featuresB.at(j) / height;
           yb = featuresB.at(j) % height;
 
-          // Add motion vectors (RED+BLUE)
-          imageB->line(xb,xb,yb,yb,1,0,1);
+          tempImage->line(xb,xb,yb,yb,1,0,1);
         }
 
-        if (!imageB->Write((outputPath + number + extension).c_str())) {
+        if (!tempImage->Write((outputPath + number + extension).c_str())) {
           fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
           exit(-1);
         }
 
         printf("Tracked features from frame%d to frame%d\n", i-1, i);
         delete imageA;
-        // delete imageB;
+        delete tempImage;
       }
       delete image;
       delete imageB;
       image = outputOrigImage;
-
-      // delete tempImage;
-
 
       
     }

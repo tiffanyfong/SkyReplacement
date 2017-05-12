@@ -118,6 +118,7 @@ operator=(const R2Image& image)
   npixels = image.npixels;
   width = image.width;
   height = image.height;
+  skyFeatures = image.skyFeatures;
 
   // Allocate new pixels
   pixels = new R2Pixel [ npixels ];
@@ -1217,7 +1218,7 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
 
   const int minInliers = numFeatures/3;
   const int numTrials = 700;
-  const int distThreshold = 5; // pixels
+  const int distThreshold = 6; // pixels
 
   // Set up random number generator
   std::random_device rd; 
@@ -1425,7 +1426,7 @@ findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int s
           ssd = 0;
           for (int k = -sqRadius; k <= sqRadius; k++) {
             for (int l = -sqRadius; l <= sqRadius; l++) {
-              currPixelA = Pixel(xa+k, ya+l);
+              currPixelA = this->Pixel(xa+k, ya+l);
               currPixelB = imageB->Pixel(xa+i+k, ya+j+l);
 
               ssd += (currPixelB.Red()-currPixelA.Red())*(currPixelB.Red()-currPixelA.Red()) +
@@ -1467,20 +1468,21 @@ NOTES ON SKY DETECTION
 
 make the sky black!
 
+FOR WHOLE VIDEO
 
 */
 void R2Image::
 MakeSkyBlack() {
+  double whitenessMin = 1.2;
+  double whitenessMax = 1.4;
+  double minBlue = 0.6;
+
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
       R2Pixel pix = Pixel(x,y);
       double red = pix.Red();
       double green = pix.Green();
       double blue = pix.Blue();
-
-      if (x == width/2 && y == 0) {
-        printf("%f, %f, %f, %f\n", red, green, blue, pix.Alpha());
-      }
 
 // too low - reject
       // high  - accept
@@ -1490,16 +1492,19 @@ MakeSkyBlack() {
       if (fabs(red-green) < 0.4
         && blue > red 
         && blue > green
-        && blue > 0.3) {
+        && blue > minBlue) {
 
         // CONSIDER BRIGHTNESS
         double whiteness = red+green+blue;
-        if (whiteness >= 1.4 && whiteness <= 1.5) {
-          double redWeight = 10.0 * whiteness - 14.0;
-          Pixel(x,y) = R2red_pixel*redWeight+Pixel(x,y)*(1.0-redWeight);
+        if (whiteness >= whitenessMin && whiteness <= whitenessMax) {
+          double redWeight = (whiteness - whitenessMin)/(whitenessMax - whitenessMin);
+          Pixel(x,y) = R2red_pixel*redWeight+Pixel(x,y)*(1.0-redWeight); // instead of red pixel --> replacement pixel
+          // 
         }
-        else if (whiteness > 1.5) {
+        else if (whiteness > whitenessMax) {
           Pixel(x,y) = R2red_pixel;
+          // apply H matrix to replacement sky
+          // replace Pixel(x,y) with warped replacement pixel
         }
       }
     }

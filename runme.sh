@@ -19,8 +19,17 @@ popd
 
 # generate the result pictures
 
-src/imgpro testSequence/test0000001.jpg testSequence/OUTPUTtest0000001.jpg \
--skyReplace 10
+# src/imgpro tissue/test0000001.jpg tissue/OUTPUTtest0000001.jpg \
+# -skyReplace 166
+
+# src/imgpro testSequence/test0000001.jpg testSequence/OUTPUTtest0000001.jpg \
+# -skyReplace 147
+
+# src/imgpro skyVid/test0000001.jpg skyVid/OUTPUTtest0000001.jpg \
+# -skyReplace 77
+
+src/imgpro skyVid/test0000001.jpg skyVid/redOUTPUT0000001.jpg \
+-skyBlack 77
 
 # src/imgpro THING/test0000001.jpg THING/hella.jpg \
 # -skyReplace 78
