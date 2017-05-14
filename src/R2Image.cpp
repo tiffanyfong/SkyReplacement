@@ -1705,7 +1705,6 @@ HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<
   const double scale = nullspaceMatrix[9][smallestIndex];
   if (scale == 0) {
     std::cout << "ERROR: scale = 0. cannot divide by 0\n";
-    scale = 1;
   }
 
   // solution = nullspace = column in V corresponding to the smallest singular value (which should be 0)
