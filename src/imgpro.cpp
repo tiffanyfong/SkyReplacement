@@ -54,7 +54,7 @@ static char options[] =
 "  -matchTranslation <file:other_image>\n"
 "  -matchHomography <file:other_image>\n"
 "  -skyBlack <int:numFrames>\n"
-"  -skyReplace <int:numFrames>\n";
+"  -skyReplace <file:other_image> <int:numFrames>\n";
 
 static void 
 ShowUsage(void)
@@ -285,37 +285,40 @@ main(int argc, char **argv)
       argv += 2, argc -= 2;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string number;
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/redshitOUTPUT";
-      std::string extension = ".jpg";
-      R2Image *imageB;
+      // std::string number;
+      // std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
+      // std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/redshitOUTPUT";
+      // std::string extension = ".jpg";
+      // R2Image *imageB;
 
-      image->MakeSkyBlack();
+      // image->MakeSkyBlack();
 
-      for (int i = 2; i <= numFrames; i++) {
-        number = "0000000" + std::to_string(i);
-        number = number.substr(number.length()-7);
-        imageB = new R2Image((inputPath + number + extension).c_str());
+      // for (int i = 2; i <= numFrames; i++) {
+      //   number = "0000000" + std::to_string(i);
+      //   number = number.substr(number.length()-7);
+      //   imageB = new R2Image((inputPath + number + extension).c_str());
 
-        imageB->MakeSkyBlack();
+      //   imageB->MakeSkyBlack();
 
-        if (!imageB->Write((outputPath + number + extension).c_str())) {
-          fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-          exit(-1);
-        }
-        delete imageB;
-      }
+      //   if (!imageB->Write((outputPath + number + extension).c_str())) {
+      //     fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
+      //     exit(-1);
+      //   }
+      //   delete imageB;
+      // }
     }
 
     else if (!strcmp(*argv, "-skyReplace")) {
       CheckOption(*argv, argc, 2);
-      const int numFrames = atoi(argv[1]);
-      argv += 2, argc -= 2;
+      R2Image *skyImage = new R2Image(argv[1]);
+      CheckOption(*argv, argc, 3);
+      const int numFrames = atoi(argv[2]);
+      argv += 3, argc -= 3;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test"; //"/Users/tmf/Desktop/skeleton/THING/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest"; //"/Users/tmf/Desktop/skeleton/THING/OUTPUTtest";
+      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
+      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest";
+      std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
       std::string extension = ".jpg";
 
       R2Image * outputOrigImage = new R2Image(*image);
@@ -324,7 +327,7 @@ main(int argc, char **argv)
       std::string number = "0000002"; // padding = 7 digits
       const int height = image->Height();
       const double sigma = 2.0;
-      const int numFeatures = 50; // 150
+      const int numFeatures = 100; // 150
       const int sqRadius = 5;
       int xa, xb, ya, yb;
 
@@ -341,17 +344,26 @@ main(int argc, char **argv)
       printf("Tracked features from frame1 to frame2\n");
 
       // Calculate H using DLTRANSAC between frame(1) and frame(2). reject bad tracks
-      double H[3][3]; // TODO DONT OVERWRITE. 3D array or R2Image field?
+      double H[3][3];
       image->SkyDLTRANSAC(imageB, H);
+      std::vector<double> Hvector;
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          Hvector.push_back(H[i][j]);
+      
+      imageB->SetH(Hvector);
 
-      for (int i = 0; i < 3; i++) {
-        for (int k = 0; k < 3; k++) {
-          std::cout<<H[i][k]<<" ";
-        }
-        std::cout<<"\n";
-      }
+
 
       R2Image *tempImage = new R2Image(*imageB);
+      // outputOrigImage->MakeSkyBlack(skyImage);
+      tempImage->MakeSkyBlack(skyImage, image->SkyFeatures());
+      if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
+        fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
+        exit(-1);
+      }
+
+      // TODO warp and blend sky image for frames(2,n)
 
       // draw features in frame(1) and frame(2)
       for (int i = 0; i < image->SkyFeatures().size(); i++) {
@@ -387,34 +399,33 @@ main(int argc, char **argv)
         number = number.substr(number.length()-7);
 
         imageB = new R2Image((inputPath + number + extension).c_str());
-        tempImage = new R2Image(*imageB);
-
 
         // Track features from frame(i-1) to frame(i)
         featuresB.clear();
         featuresB = imageA->findAFeaturesOnB(imageB, imageA->SkyFeatures(), sqRadius);
         imageB->SetSkyFeatures(featuresB);
-
-        // CLEAR THE H
-        for (int iii = 0; iii < 3; iii++) {
-          for (int kk = 0; kk < 3; kk++) {
-            H[iii][kk] = 0;
-          }
-        }
+        Hvector.clear();
 
         // Calculate H between frame(i-1) and frame(i)
         imageA->SkyDLTRANSAC(imageB, H);
 
-        for (int iii = 0; iii < 3; iii++) {
-          for (int kk = 0; kk < 3; kk++) {
-            std::cout<<H[iii][kk]<<" ";
+        for (int j = 0; j < 3; j++) {
+          for (int k = 0; k < 3; k++) {
+            Hvector.push_back(H[j][k]);
+            printf("%f ", H[j][k]);
           }
-          std::cout<<"\n";
+          printf("\n");
         }
 
+        imageB->SetH(Hvector);
+        tempImage = new R2Image(*imageB);
+        tempImage->MakeSkyBlack(skyImage, imageA->SkyFeatures());
 
-        // TODO replace sky with image (video later?)
-          // apply the H to the sky. 
+        // test to see if sky warps decently
+        if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
+          fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
+          exit(-1);
+        }
 
         // draw features in input image
         for (int j = 0; j < featuresB.size(); j++) {

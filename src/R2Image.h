@@ -50,6 +50,7 @@ class R2Image {
   int Width(void) const;
   int Height(void) const;
   std::vector<int> SkyFeatures(void) const;
+  std::vector<double> H(void) const;
 
   // Pixel access/update
   R2Pixel& Pixel(int x, int y);
@@ -59,6 +60,7 @@ class R2Image {
   const R2Pixel *operator[](int row) const;
   void SetPixel(int x, int y,  const R2Pixel& pixel);
   void SetSkyFeatures(const std::vector<int> sf);
+  void SetH(const std::vector<double> hmatrix);
 
   // Image processing
   R2Image& operator=(const R2Image& image);
@@ -96,6 +98,8 @@ class R2Image {
   // void SkyFirstFrameProcess
   void SkyFrameProcess(int i, R2Image * imageA, R2Image * imageB);
   void SkyRANSAC(R2Image * imageB);
+  void MakeSkyBlack(R2Image * newSky, const std::vector<int> featuresA);
+  void SkyDLTRANSAC(R2Image * imageB, double H[3][3]);
 
   // helper functions
   bool validPixel(const int x, const int y);
@@ -105,9 +109,7 @@ class R2Image {
   void line(int x0, int x1, int y0, int y1, float r, float g, float b);
   // todo this is unrelated to the image
   void HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<R2Point> modified, const int n);
-  void findGoodTracks(std::vector<int> featuresA, std::vector<int> featuresB, double H[3][3]);
-  void MakeSkyBlack(void);
-  void SkyDLTRANSAC(R2Image * imageB, double H[3][3]);
+  void ImprovedH(double H[3][3], const std::vector<int> featuresA, const std::vector<int> featuresB, const int height);
 
 
   // File reading/writing
@@ -131,6 +133,8 @@ class R2Image {
   int width;
   int height;
   std::vector<int> skyFeatures;
+  std::vector<double> h; // 9 vector
+
 };
 
 
@@ -167,6 +171,12 @@ inline std::vector<int> R2Image::
 SkyFeatures(void) const
 {
   return skyFeatures;
+}
+
+inline std::vector<double> R2Image::
+H(void) const
+{
+  return h;
 }
 
 
@@ -231,6 +241,12 @@ inline void R2Image::
 SetSkyFeatures(const std::vector<int> sf)
 {
   skyFeatures = sf;
+}
+
+inline void R2Image::
+SetH(const std::vector<double> hmatrix)
+{
+  h = hmatrix;
 }
 
 

@@ -26,8 +26,10 @@ R2Image(void)
     npixels(0),
     width(0), 
     height(0),
-    skyFeatures(std::vector<int>())
+    skyFeatures(std::vector<int>()),
+    h(std::vector<double>(9))
 {
+
 }
 
 
@@ -38,7 +40,8 @@ R2Image(const char *filename)
     npixels(0),
     width(0), 
     height(0),
-    skyFeatures(std::vector<int>())
+    skyFeatures(std::vector<int>()),
+    h(std::vector<double>(9))
 {
   // Read image
   Read(filename);
@@ -52,7 +55,8 @@ R2Image(int width, int height)
     npixels(width * height),
     width(width), 
     height(height),
-    skyFeatures(std::vector<int>())
+    skyFeatures(std::vector<int>()),
+    h(std::vector<double>(9))
 {
   // Allocate pixels
   pixels = new R2Pixel [ npixels ];
@@ -67,7 +71,8 @@ R2Image(int width, int height, const R2Pixel *p)
     npixels(width * height),
     width(width), 
     height(height),
-    skyFeatures(std::vector<int>())
+    skyFeatures(std::vector<int>()),
+    h(std::vector<double>(9))
 {
   // Allocate pixels
   pixels = new R2Pixel [ npixels ];
@@ -86,8 +91,11 @@ R2Image(const R2Image& image)
     npixels(image.npixels),
     width(image.width), 
     height(image.height),
-    skyFeatures(image.skyFeatures)
+    skyFeatures(image.skyFeatures),
+    h(image.h)
 {
+
+
   // Allocate pixels
   pixels = new R2Pixel [ npixels ];
   assert(pixels);
@@ -119,6 +127,7 @@ operator=(const R2Image& image)
   width = image.width;
   height = image.height;
   skyFeatures = image.skyFeatures;
+  h = image.h;
 
   // Allocate new pixels
   pixels = new R2Pixel [ npixels ];
@@ -1207,18 +1216,19 @@ void R2Image::
 SkyDLTRANSAC(R2Image * imageB, double H[3][3])
 {
   // Tracks imageA's features (this) to imageB
-  // Exterminates outliers based on RANSAC
+  // Exterminates outliers based on RANSAC 
+  // NEW: outliers are represented as -1 in the features vector --> the features vector will always be the same size
   // Also returns the resulting H matrix
 
-  std::vector<int> featuresA = this->SkyFeatures();
+  const std::vector<int> featuresA = this->SkyFeatures();
   std::vector<int> featuresB = imageB->SkyFeatures();
 
-  const int numFeatures = this->SkyFeatures().size();
+  const int numFeatures = featuresA.size();
   printf("PLZ BE >= 4   %d\n", numFeatures);
 
-  const int minInliers = numFeatures/3;
-  const int numTrials = 700;
-  const int distThreshold = 6; // pixels
+  const int minInliers = 4;
+  const int numTrials = 800;
+  const int distThreshold = 4; // pixels
 
   // Set up random number generator
   std::random_device rd; 
@@ -1247,7 +1257,8 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
     for (int i = 0; i < n; i++) {
       do {
         r = dis(gen);
-      } while (std::find(randIndexes.begin(), randIndexes.end(), r) != randIndexes.end());
+      } while (std::find(randIndexes.begin(), randIndexes.end(), r) != randIndexes.end()
+        && featuresA.at(r) != -1);
       randIndexes.push_back(r);
       tracksA.push_back(R2Point(featuresA.at(r)/height, featuresA.at(r)%height)); 
       tracksB.push_back(R2Point(featuresB.at(r)/height, featuresB.at(r)%height));
@@ -1257,30 +1268,38 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
 
     // count inliers based on H
     for (int i = 0; i < numFeatures; i++) {
-      int fA_x = featuresA.at(i)/height;
-      int fA_y = featuresA.at(i)%height;
-      int fB = featuresB.at(i);
+      if (featuresA.at(i) != -1) {
+        int fA_x = featuresA.at(i)/height;
+        int fA_y = featuresA.at(i)%height;
+        int fB = featuresB.at(i);
 
-      // matrix multiplication with H
-      double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
-      double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
+        // matrix multiplication with H
+        double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
+        double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
 
-      // todo: keep the shear factor to normalize z=1?
-      double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
-      HfA_x /= HfA_z;
-      HfA_y /= HfA_z;
+        // todo: keep the shear factor to normalize z=1?
+        double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
+        HfA_x /= HfA_z;
+        HfA_y /= HfA_z;
 
-      temp[i] = fabs(HfA_x - fB/height) <= distThreshold && 
-          fabs(HfA_y - fB%height) <= distThreshold;// ? 1 : 0;
-
-      if (temp[i])// == 1)
-        count++;
+        if (fabs(HfA_x - fB/height) <= distThreshold && 
+            fabs(HfA_y - fB%height) <= distThreshold) {
+          temp[i] = 1;
+          count++;
+        }
+        else {
+          temp[i] = 0;
+        }
+      }
+      else {
+        temp[i] = 0;
+      }
     }
 
     // update bestH
-    // if (count < minInliers) {
-    //   trial--; // repeat the process if below the minInlier threshold
-    // }
+    if (count < minInliers) {
+      trial--; // repeat the process if below the minInlier threshold
+    }
     if (count > bestNumInliers) {
       bestNumInliers = count;
 
@@ -1290,16 +1309,12 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
   }
 
   // DELETE outliers
-  featuresA.clear();
-  featuresB.clear();
   for (int i = 0; i < numFeatures; i++) {
-    if (inliers[i] == 1) { // inlier
-      featuresA.push_back(this->SkyFeatures().at(i));
-      featuresB.push_back(imageB->SkyFeatures().at(i));
+    if (inliers[i] == 0) { // outlier
+      featuresB.at(i) = -1;
     }
   }
 
-  this->SetSkyFeatures(featuresA);
   imageB->SetSkyFeatures(featuresB);
 }
 
@@ -1393,7 +1408,7 @@ getFeaturePositions(const double sigma, const int numFeatures, const int sqRadiu
 std::vector<int> R2Image::
 findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int sqRadius) 
 {
-  /////// FOR SKYREPLACEMENT, assume small motion ///////
+  // FOR SKYREPLACEMENT, ASSUME SMALL MOTION
   // const int searchW = width/5-sqRadius;
   // const int searchH = height/5-sqRadius;
   const int searchW = 50;
@@ -1455,7 +1470,6 @@ findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int s
   return featuresB;
 }
 
-
 /*
 
 NOTES ON SKY DETECTION
@@ -1471,11 +1485,82 @@ make the sky black!
 FOR WHOLE VIDEO
 
 */
+
+// input image = imageB with featuresB
 void R2Image::
-MakeSkyBlack() {
+MakeSkyBlack(R2Image *newSky, const std::vector<int> featuresA) {
   double whitenessMin = 1.2;
   double whitenessMax = 1.4;
   double minBlue = 0.6;
+  R2Image* warpedSky = new R2Image(*newSky);
+  std::vector<double> h = H();
+
+  // warp sky image - inverse warping
+  double H1[3][3];
+  double det = h.at(0) * (h.at(4) * h.at(8) - h.at(7) * h.at(5)) -
+               h.at(1) * (h.at(3) * h.at(8) - h.at(5) * h.at(6)) +
+               h.at(2) * (h.at(3) * h.at(7) - h.at(4) * h.at(6));
+  
+
+  // double det = H[0][0] * (H[1][1] * H[2][2] - H[2][1] * H[1][2]) -
+  //              H[0][1] * (H[1][0] * H[2][2] - H[1][2] * H[2][0]) +
+  //              H[0][2] * (H[1][0] * H[2][1] - H[1][1] * H[2][0]);
+  if (det == 0) {
+    printf("Oops determinant = 0\n");
+    return;
+  }
+
+  double invdet = 1.0/det;
+
+  // H1[0][0] = (H[1][1] * H[2][2] - H[2][1] * H[1][2]) * invdet;
+  // H1[0][1] = (H[0][2] * H[2][1] - H[0][1] * H[2][2]) * invdet;
+  // H1[0][2] = (H[0][1] * H[1][2] - H[0][2] * H[1][1]) * invdet;
+  // H1[1][0] = (H[1][2] * H[2][0] - H[1][0] * H[2][2]) * invdet;
+  // H1[1][1] = (H[0][0] * H[2][2] - H[0][2] * H[2][0]) * invdet;
+  // H1[1][2] = (H[1][0] * H[0][2] - H[0][0] * H[1][2]) * invdet;
+  // H1[2][0] = (H[1][0] * H[2][1] - H[2][0] * H[1][1]) * invdet;
+  // H1[2][1] = (H[2][0] * H[0][1] - H[0][0] * H[2][1]) * invdet;
+  // H1[2][2] = (H[0][0] * H[1][1] - H[1][0] * H[0][1]) * invdet;
+
+
+  H1[0][0] = (h.at(4) * h.at(8) - h.at(7) * h.at(5)) * invdet;
+  H1[0][1] = (h.at(2) * h.at(7) - h.at(1) * h.at(8)) * invdet;
+  H1[0][2] = (h.at(1) * h.at(5) - h.at(2) * h.at(4)) * invdet;
+  H1[1][0] = (h.at(5) * h.at(6) - h.at(3) * h.at(8)) * invdet;
+  H1[1][1] = (h.at(0) * h.at(8) - h.at(2) * h.at(6)) * invdet;
+  H1[1][2] = (h.at(3) * h.at(2) - h.at(0) * h.at(5)) * invdet;
+  H1[2][0] = (h.at(3) * h.at(7) - h.at(6) * h.at(4)) * invdet;
+  H1[2][1] = (h.at(6) * h.at(1) - h.at(0) * h.at(7)) * invdet;
+  H1[2][2] = (h.at(0) * h.at(4) - h.at(3) * h.at(1)) * invdet;
+
+
+  for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) {
+
+      // matrix multiplication with H
+      double HA_x = H1[0][0]*x + H1[0][1]*y + H1[0][2]; // H[0][2]*1
+      double HA_y = H1[1][0]*x + H1[1][1]*y + H1[1][2];
+      double HA_z = H1[2][0]*x + H1[2][1]*y + H1[2][2];
+      HA_x /= HA_z;
+      HA_y /= HA_z;
+
+      // bilinear interpolation
+      // such that x2-x1=1 and y2-y1=1
+      double x1 = (int) HA_x;
+      double y1 = (int) HA_y;
+      double x2 = x1+1;
+      double y2 = y1+1;
+
+      if (newSky->validPixel(x1, y1) && newSky->validPixel(x2,y2)) {
+        R2Pixel fxy1 = (x2-HA_x)*newSky->Pixel(x1,y1) + (HA_x-x1)*newSky->Pixel(x2,y1);
+        R2Pixel fxy2 = (x2-HA_x)*newSky->Pixel(x1,y2) + (HA_x-x1)*newSky->Pixel(x2,y2);
+
+        R2Pixel bilinearPix = (y2-HA_y)*fxy1 + (HA_y-y1)*fxy2;
+
+        warpedSky->Pixel(x,y) = bilinearPix;
+      }
+    }
+  }
 
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
@@ -1497,18 +1582,24 @@ MakeSkyBlack() {
         // CONSIDER BRIGHTNESS
         double whiteness = red+green+blue;
         if (whiteness >= whitenessMin && whiteness <= whitenessMax) {
-          double redWeight = (whiteness - whitenessMin)/(whitenessMax - whitenessMin);
-          Pixel(x,y) = R2red_pixel*redWeight+Pixel(x,y)*(1.0-redWeight); // instead of red pixel --> replacement pixel
-          // 
+          double skyWeight = (whiteness - whitenessMin)/(whitenessMax - whitenessMin);
+          Pixel(x,y) = warpedSky->Pixel(x,y)*skyWeight+Pixel(x,y)*(1.0-skyWeight);
         }
         else if (whiteness > whitenessMax) {
-          Pixel(x,y) = R2red_pixel;
-          // apply H matrix to replacement sky
-          // replace Pixel(x,y) with warped replacement pixel
+          Pixel(x,y) = warpedSky->Pixel(x,y);
         }
       }
     }
   }
+
+// replace newSky with warpedSky
+  for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) {
+      newSky->SetPixel(x,y, warpedSky->Pixel(x,y));
+    }
+  }
+
+  delete warpedSky;
 }
 
 
@@ -1605,12 +1696,16 @@ HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<
 
   // find smallest singular value
   int smallestIndex = 1;
-  for(int i=2;i<10;i++) if(singularValues[i]<singularValues[smallestIndex]) smallestIndex=i;
+  for (int i=2;i<10;i++) {
+    if (singularValues[i]<singularValues[smallestIndex]) 
+      smallestIndex=i;
+  }
 
   // todo what if its 0?
   const double scale = nullspaceMatrix[9][smallestIndex];
   if (scale == 0) {
     std::cout << "ERROR: scale = 0. cannot divide by 0\n";
+    scale = 1;
   }
 
   // solution = nullspace = column in V corresponding to the smallest singular value (which should be 0)
@@ -1621,6 +1716,25 @@ HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<
         ? 0 
         : (nullspaceMatrix[i+1][smallestIndex] / scale);
   }
+}
+
+// this = imageB with featuresB
+void R2Image::
+ImprovedH(double H[3][3], const std::vector<int> featuresA, const std::vector<int> featuresB, const int height) 
+{
+  std::vector<R2Point> tracksA;
+  std::vector<R2Point> tracksB;
+  const int size = featuresB.size();
+  assert(featuresA.size() == size);
+
+  for (int i = 0; i < size; i++) {
+    if (featuresA.at(i) != -1 && featuresB.at(i) != -1) {
+      tracksA.push_back(R2Point(featuresA.at(i)/height, featuresA.at(i)%height));
+      tracksB.push_back(R2Point(featuresB.at(i)/height, featuresB.at(i)%height));
+    }
+  }
+
+  HomoEstimate(H, tracksA, tracksB, tracksA.size());
 }
 
 
@@ -1639,6 +1753,7 @@ Read(const char *filename)
   // Parse input filename extension
   char *input_extension;
   if (!(input_extension = (char*)strrchr(filename, '.'))) {
+    printf("%s\n", filename);
     fprintf(stderr, "Input file has no extension (e.g., .jpg).\n");
     return 0;
   }
