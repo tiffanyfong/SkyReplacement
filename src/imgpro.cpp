@@ -316,9 +316,9 @@ main(int argc, char **argv)
       argv += 3, argc -= 3;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest";
-      std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
+      std::string inputPath = "/Users/tmf/Desktop/SkyReplace/skyVid/test";
+      std::string outputPath = "/Users/tmf/Desktop/SkyReplace/skyVid/OUTPUTtest";
+      std::string warpedSkyPath = "/Users/tmf/Desktop/SkyReplace/skyVid/warpedSky";
       std::string extension = ".jpg";
 
       R2Image * outputOrigImage = new R2Image(*image);
@@ -361,13 +361,14 @@ main(int argc, char **argv)
 
       R2Image *tempImage = new R2Image(*imageB);
       // outputOrigImage->MakeSkyBlack(skyImage);
-      // tempImage->MakeSkyBlack(skyImage, image->SkyFeatures());
+       tempImage->MakeSkyBlackTranslation(skyImage);
       if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
         fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
         exit(-1);
       }
 
       // TODO warp and blend sky image for frames(2,n)
+
 
       // draw features in frame(1) and frame(2)
       for (int i = 0; i < image->SkyFeatures().size(); i++) {
@@ -399,7 +400,7 @@ main(int argc, char **argv)
         imageA = imageB;
 
         // Calculate new imageB
-        number = "0000000" + std::to_string(i);
+        number = "0000000" + i;
         number = number.substr(number.length()-7);
 
         imageB = new R2Image((inputPath + number + extension).c_str());
@@ -426,7 +427,7 @@ main(int argc, char **argv)
         imageA->SkyRANSAC(imageB);
 
         tempImage = new R2Image(*imageB);
-        tempImage->MakeSkyBlack(skyImage, imageA->SkyFeatures());
+        tempImage->MakeSkyBlackTranslation(skyImage);
 
         // test to see if sky warps decently
         if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {

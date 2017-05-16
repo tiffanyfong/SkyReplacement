@@ -101,6 +101,7 @@ class R2Image {
   void SkyFrameProcess(int i, R2Image * imageA, R2Image * imageB);
   void SkyRANSAC(R2Image * imageB);
   void MakeSkyBlack(R2Image * newSky, const std::vector<int> featuresA);
+  void MakeSkyBlackTranslation(R2Image * newSky);
   void SkyDLTRANSAC(R2Image * imageB, double H[3][3]);
 
   // helper functions
