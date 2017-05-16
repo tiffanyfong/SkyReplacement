@@ -1224,11 +1224,17 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
   std::vector<int> featuresB = imageB->SkyFeatures();
 
   const int numFeatures = featuresA.size();
-  printf("PLZ BE >= 4   %d\n", numFeatures);
+  int countValidFeatures = 0;
+  for (int f : featuresA) {
+    if (f != -1)
+      countValidFeatures++;
+  }
+  printf("PLZ BE >= 4   %d\n", countValidFeatures);
 
   const int minInliers = 4;
   const int numTrials = 800;
-  const int distThreshold = 4; // pixels
+  const int distThreshold = 3; // pixels
+  double bestH[3][3] = {{0,0,10000},{0,0,10000},{0,0,1}};
 
   // Set up random number generator
   std::random_device rd; 
@@ -1242,7 +1248,7 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
   bool temp[numFeatures];
 
   // #correspondences
-  const int n = 4;
+  const int n = 8;//4;
   std::vector<R2Point> tracksA;
   std::vector<R2Point> tracksB;
 
@@ -1253,12 +1259,13 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
     randIndexes.clear();
     count = 0;
 
-    // randomly pick 4 points
+    // randomly pick #correspondences points
     for (int i = 0; i < n; i++) {
       do {
         r = dis(gen);
       } while (std::find(randIndexes.begin(), randIndexes.end(), r) != randIndexes.end()
-        && featuresA.at(r) != -1);
+        && featuresA.at(r) != -1
+        && featuresB.at(r) != -1); // todo unnecessary?
       randIndexes.push_back(r);
       tracksA.push_back(R2Point(featuresA.at(r)/height, featuresA.at(r)%height)); 
       tracksB.push_back(R2Point(featuresB.at(r)/height, featuresB.at(r)%height));
@@ -1266,33 +1273,36 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
 
     HomoEstimate(H, tracksA, tracksB, n);
 
-    // count inliers based on H
-    for (int i = 0; i < numFeatures; i++) {
-      if (featuresA.at(i) != -1) {
-        int fA_x = featuresA.at(i)/height;
-        int fA_y = featuresA.at(i)%height;
-        int fB = featuresB.at(i);
+    // prevent crazy shear?
+    if (fabs(H[2][0]) < 0.000015 && fabs(H[2][1]) < 0.000015) {
+      // count inliers based on H
+      for (int i = 0; i < numFeatures; i++) {
+        if (featuresA.at(i) != -1) {
+          int fA_x = featuresA.at(i)/height;
+          int fA_y = featuresA.at(i)%height;
+          int fB = featuresB.at(i);
 
-        // matrix multiplication with H
-        double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
-        double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
+          // matrix multiplication with H
+          double HfA_x = H[0][0]*fA_x + H[0][1]*fA_y + H[0][2]; // H[0][2]*1
+          double HfA_y = H[1][0]*fA_x + H[1][1]*fA_y + H[1][2];
 
-        // todo: keep the shear factor to normalize z=1?
-        double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
-        HfA_x /= HfA_z;
-        HfA_y /= HfA_z;
+          // todo: keep the shear factor to normalize z=1?
+          double HfA_z = H[2][0]*fA_x + H[2][1]*fA_y + H[2][2];
+          HfA_x /= HfA_z;
+          HfA_y /= HfA_z;
 
-        if (fabs(HfA_x - fB/height) <= distThreshold && 
-            fabs(HfA_y - fB%height) <= distThreshold) {
-          temp[i] = 1;
-          count++;
+          if (fabs(HfA_x - fB/height) <= distThreshold && 
+              fabs(HfA_y - fB%height) <= distThreshold) {
+            temp[i] = 1;
+            count++;
+          }
+          else {
+            temp[i] = 0;
+          }
         }
         else {
           temp[i] = 0;
         }
-      }
-      else {
-        temp[i] = 0;
       }
     }
 
@@ -1300,8 +1310,14 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
     if (count < minInliers) {
       trial--; // repeat the process if below the minInlier threshold
     }
-    if (count > bestNumInliers) {
+    if (count >= bestNumInliers) { //&& 
+      // fabs(H[0][2]) + fabs(H[1][2]) < fabs(bestH[0][2]) + fabs(bestH[1][2])) {
       bestNumInliers = count;
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          bestH[i][j] = H[i][j];
+        }
+      }
 
       for (int i = 0; i < numFeatures; i++)
         inliers[i] = temp[i];
@@ -1416,55 +1432,58 @@ findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int s
   std::vector<int> featuresB;
 
 
-  /////// FIND ALL 150 FEATURES ON IMAGEB ///////
+  /////// FIND ALL FEATURES ON IMAGEB ///////
   R2Pixel currPixelA, currPixelB;
   int xa, ya, xb, yb;
   double ssd, ssdBest;
 
   // For each feature in imageA, run a local search
   for (int pos : featuresA) {
-    xa = pos / height;
-    ya = pos % height;
-    ssdBest = INT_MAX;
+    if (pos != -1) {
+      xa = pos / height;
+      ya = pos % height;
+      ssdBest = INT_MAX;
 
-    // Search loop centered at original location
-    for (int i = -searchW; i <= searchW; i++) {
-      for (int j = -searchH; j <= searchH; j++) {
+      // Search loop centered at original location
+      for (int i = -searchW; i <= searchW; i++) {
+        for (int j = -searchH; j <= searchH; j++) {
 
-        // check if the pixels of the search area is in bounds
-        if (validPixel(xa+i-sqRadius, ya+j-sqRadius) &&
-          validPixel(xa+i+sqRadius, ya+j+sqRadius)) {
+          // check if the pixels of the search area is in bounds
+          if (validPixel(xa+i-sqRadius, ya+j-sqRadius) &&
+            validPixel(xa+i+sqRadius, ya+j+sqRadius)) {
 
-          // Calculates SSD
-          // SSD = sum of squared differences across the feature descriptor squares
-          // (feature descriptor square is the size of my red/green squares)
-          ssd = 0;
-          for (int k = -sqRadius; k <= sqRadius; k++) {
-            for (int l = -sqRadius; l <= sqRadius; l++) {
-              currPixelA = this->Pixel(xa+k, ya+l);
-              currPixelB = imageB->Pixel(xa+i+k, ya+j+l);
+            // Calculates SSD
+            // SSD = sum of squared differences across the feature descriptor squares
+            // (feature descriptor square is the size of my red/green squares)
+            ssd = 0;
+            for (int k = -sqRadius; k <= sqRadius; k++) {
+              for (int l = -sqRadius; l <= sqRadius; l++) {
+                currPixelA = this->Pixel(xa+k, ya+l);
+                currPixelB = imageB->Pixel(xa+i+k, ya+j+l);
 
-              ssd += (currPixelB.Red()-currPixelA.Red())*(currPixelB.Red()-currPixelA.Red()) +
-                (currPixelB.Green()-currPixelA.Green())*(currPixelB.Green()-currPixelA.Green()) +
-                (currPixelB.Blue()-currPixelA.Blue())*(currPixelB.Blue()-currPixelA.Blue());
-                // ignore alpha?
+                ssd += (currPixelB.Red()-currPixelA.Red())*(currPixelB.Red()-currPixelA.Red()) +
+                  (currPixelB.Green()-currPixelA.Green())*(currPixelB.Green()-currPixelA.Green()) +
+                  (currPixelB.Blue()-currPixelA.Blue())*(currPixelB.Blue()-currPixelA.Blue());
+                  // ignore alpha?
+              }
             }
-          }
 
-          // Choose the best ssd
-          if (ssd < ssdBest) {
-            ssdBest = ssd;
-            xb = xa+i;
-            yb = ya+j;
+            // Choose the best ssd
+            if (ssd < ssdBest) {
+              ssdBest = ssd;
+              xb = xa+i;
+              yb = ya+j;
+            }
           }
         }
       }
+
+      // (xb,yb) is the position with the min SSD (likely feature match)
+      featuresB.push_back(xb*height+yb);
     }
-
-    // (xb,yb) is the position with the min SSD (likely feature match)
-    featuresB.push_back(xb*height+yb);
-
-
+    else {
+      featuresB.push_back(-1);
+    }
   }
 
   return featuresB;
