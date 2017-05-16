@@ -1229,7 +1229,7 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
     if (f != -1)
       countValidFeatures++;
   }
-  printf("PLZ BE >= 4   %d\n", countValidFeatures);
+  printf("PLZ BE >= 8   %d\n", countValidFeatures);
 
   const int minInliers = 4;
   const int numTrials = 800;
@@ -1722,9 +1722,9 @@ HomoEstimate(double H[3][3], const std::vector<R2Point> orig, const std::vector<
 
   // todo what if its 0?
   const double scale = nullspaceMatrix[9][smallestIndex];
-  if (scale == 0) {
-    std::cout << "ERROR: scale = 0. cannot divide by 0\n";
-  }
+  // if (scale == 0) {
+    // std::cout << "ERROR: scale = 0. cannot divide by 0\n";
+  // }
 
   // solution = nullspace = column in V corresponding to the smallest singular value (which should be 0)
   for (int i = 0; i < 9; i++) {

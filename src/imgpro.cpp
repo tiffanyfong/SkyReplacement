@@ -316,9 +316,9 @@ main(int argc, char **argv)
       argv += 3, argc -= 3;
       printf("NUMBER OF FRAMES: %d\n", numFrames);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest";
-      std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
+      std::string inputPath = "/Users/tmf/Desktop/skeleton/ait3/test";
+      std::string outputPath = "/Users/tmf/Desktop/skeleton/ait3/OUTPUTtest";
+      std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/ait3/warpedSky";
       std::string extension = ".jpg";
 
       R2Image * outputOrigImage = new R2Image(*image);

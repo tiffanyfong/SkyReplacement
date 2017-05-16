@@ -19,8 +19,15 @@ popd
 
 # generate the result pictures
 
-src/imgpro skyVid/test0000001.jpg skyVid/OUTPUTtest0000001.jpg \
--skyReplace skyVid/newSky.jpg 77
+# src/imgpro skyVid/test0000001.jpg skyVid/OUTPUTtest0000001.jpg \
+# -skyReplace skyVid/newSky.jpg 77
+
+# src/imgpro tissue/test0000001.jpg tissue/OUTPUTtest0000001.jpg \
+# -skyReplace skyVid/newSky.jpg 166
+
+src/imgpro ait3/test0000001.jpg ait3/OUTPUTtest0000001.jpg \
+-skyReplace ait3/newSky.jpg 163
+
 
 # src/imgpro testSequence/test0000001.jpg testSequence/OUTPUTtest0000001.jpg \
 # -skyReplace 147
