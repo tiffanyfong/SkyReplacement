@@ -1229,7 +1229,9 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
     if (f != -1)
       countValidFeatures++;
   }
-  printf("PLZ BE >= 8   %d\n", countValidFeatures);
+  // #correspondences
+  const int n = 8;
+  printf("PLZ BE >= %d   %d\n", n, countValidFeatures);
 
   const int minInliers = 4;
   const int numTrials = 800;
@@ -1247,8 +1249,6 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
   bool inliers[numFeatures];
   bool temp[numFeatures];
 
-  // #correspondences
-  const int n = 8;//4;
   std::vector<R2Point> tracksA;
   std::vector<R2Point> tracksB;
 

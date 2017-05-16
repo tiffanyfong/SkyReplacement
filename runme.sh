@@ -25,9 +25,11 @@ popd
 # src/imgpro tissue/test0000001.jpg tissue/OUTPUTtest0000001.jpg \
 # -skyReplace skyVid/newSky.jpg 166
 
-src/imgpro ait3/test0000001.jpg ait3/OUTPUTtest0000001.jpg \
--skyReplace ait3/newSky.jpg 163
+# src/imgpro ait3/test0000001.jpg ait3/OUTPUTtest0000001.jpg \
+# -skyReplace ait3/newSky.jpg 163
 
+src/imgpro ait1/test0000001.jpg ait1/OUTPUTtest0000001.jpg \
+-skyReplace ait1/newSky.jpg 120
 
 # src/imgpro testSequence/test0000001.jpg testSequence/OUTPUTtest0000001.jpg \
 # -skyReplace 147
