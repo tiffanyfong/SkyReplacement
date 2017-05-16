@@ -344,20 +344,24 @@ main(int argc, char **argv)
       printf("Tracked features from frame1 to frame2\n");
 
       // Calculate H using DLTRANSAC between frame(1) and frame(2). reject bad tracks
-      double H[3][3];
-      image->SkyDLTRANSAC(imageB, H);
+      // double H[3][3];
+      // image->SkyDLTRANSAC(imageB, H);
       std::vector<double> Hvector;
-      for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
-          Hvector.push_back(H[i][j]);
+      // TODO Hvector never set..
+      // for (int i = 0; i < 3; i++)
+      //   for (int j = 0; j < 3; j++)
+      //     Hvector.push_back(H[i][j]);
       
-      imageB->SetH(Hvector);
+      // imageB->SetH(Hvector);
+
+      // Translation RANSAC
+      image->SkyRANSAC(imageB);
 
 
 
       R2Image *tempImage = new R2Image(*imageB);
       // outputOrigImage->MakeSkyBlack(skyImage);
-      tempImage->MakeSkyBlack(skyImage, image->SkyFeatures());
+      // tempImage->MakeSkyBlack(skyImage, image->SkyFeatures());
       if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
         fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
         exit(-1);
@@ -407,17 +411,20 @@ main(int argc, char **argv)
         Hvector.clear();
 
         // Calculate H between frame(i-1) and frame(i)
-        imageA->SkyDLTRANSAC(imageB, H);
+        // imageA->SkyDLTRANSAC(imageB, H);
 
-        for (int j = 0; j < 3; j++) {
-          for (int k = 0; k < 3; k++) {
-            Hvector.push_back(H[j][k]);
-            printf("%f ", H[j][k]);
-          }
-          printf("\n");
-        }
+        // for (int j = 0; j < 3; j++) {
+        //   for (int k = 0; k < 3; k++) {
+        //     Hvector.push_back(H[j][k]);
+        //     printf("%f ", H[j][k]);
+        //   }
+        //   printf("\n");
+        // }
 
-        imageB->SetH(Hvector);
+        // imageB->SetH(Hvector);
+
+        imageA->SkyRANSAC(imageB);
+
         tempImage = new R2Image(*imageB);
         tempImage->MakeSkyBlack(skyImage, imageA->SkyFeatures());
 

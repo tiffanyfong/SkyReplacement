@@ -51,6 +51,7 @@ class R2Image {
   int Height(void) const;
   std::vector<int> SkyFeatures(void) const;
   std::vector<double> H(void) const;
+  std::vector<int> TranslationVector(void) const;
 
   // Pixel access/update
   R2Pixel& Pixel(int x, int y);
@@ -61,6 +62,7 @@ class R2Image {
   void SetPixel(int x, int y,  const R2Pixel& pixel);
   void SetSkyFeatures(const std::vector<int> sf);
   void SetH(const std::vector<double> hmatrix);
+  void SetTranslationVector(const std::vector<int> tv);
 
   // Image processing
   R2Image& operator=(const R2Image& image);
@@ -134,6 +136,7 @@ class R2Image {
   int height;
   std::vector<int> skyFeatures;
   std::vector<double> h; // 9 vector
+  std::vector<int> translationVector;
 
 };
 
@@ -249,6 +252,10 @@ SetH(const std::vector<double> hmatrix)
   h = hmatrix;
 }
 
-
+inline void R2Image::
+SetTranslationVector(const std::vector<int> tv)
+{
+  translationVector = tv;
+}
 
 #endif

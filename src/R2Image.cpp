@@ -1211,6 +1211,83 @@ blendOtherImageHomography(R2Image * imageB)
  *this = outputImage;
 }
 
+void R2Image::
+SkyRANSAC(R2Image * imageB)
+{
+  const std::vector<int> featuresA = this->SkyFeatures();
+  std::vector<int> featuresB = imageB->SkyFeatures();
+
+  const int numFeatures = featuresA.size();
+  printf("PLZ BE >= 4   %d\n", numFeatures);
+
+  const int minInliers = 4;
+  const int numTrials = 800;
+  const int distThreshold = 4; // pixels
+
+  // Set up random number generator
+  std::random_device rd; 
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(0, numFeatures-1);
+  std::vector<int> randIndexes;
+  std::vector<int> tv;
+
+  int bestNumInliers = 0;
+  bool inliers[numFeatures];
+  bool temp[numFeatures];
+  int randIndex, count;
+  int dist[numFeatures][2];
+
+  // initialize distance metric for all features
+  for (int i = 0; i < numFeatures; i++) {
+    dist[i][0] = (featuresB.at(i)/height) - (featuresA.at(i)/height);
+    dist[i][1] = (featuresB.at(i)%height) - (featuresA.at(i)%height);
+  }
+
+  for (int trial = 0; trial < numTrials; trial++) {
+    count = 0;
+    randIndex = dis(gen);
+
+    int xDistRand = dist[randIndex][0];
+    int yDistRand = dist[randIndex][1];
+
+    for (int i = 0; i < numFeatures; i++) {
+      temp[i] = abs(xDistRand - dist[i][0]) <= distThreshold && 
+          abs(yDistRand - dist[i][1]) <= distThreshold;
+
+      if (temp[i] == 1) {
+        count++;
+        tv.clear();
+        tv.push_back(dist[i][0]);
+        tv.push_back(dist[i][1]);
+      }
+        
+    }
+
+
+    if (count > bestNumInliers) {
+      bestNumInliers = count;
+      for (int i = 0; i < numFeatures; i++) {
+        inliers[i] = temp[i];
+      }
+      imageB->SetTranslationVector(tv);
+    }
+    else if (count < minInliers) {
+      trial--; // repeat the process if below the min inlier threshold
+    }
+  }
+
+  // DELETE outliers
+  for (int i = 0; i < numFeatures; i++) {
+    if (inliers[i] == 0) { // outlier
+      featuresB.at(i) = -1;
+    }
+  }
+
+  imageB->SetSkyFeatures(featuresB);
+
+  
+}
+
 
 void R2Image::
 SkyDLTRANSAC(R2Image * imageB, double H[3][3])
