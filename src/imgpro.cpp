@@ -322,7 +322,7 @@ main(int argc, char **argv)
       std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
       std::string extension = ".jpg";
 
-      std::string number;// = "0000002"; // padding = 7 digits
+      std::string number; // padding = 7 digits
       const int height = image->Height();
       const double sigma = 2.0;
       const int numFeatures = 100; // 150
@@ -335,16 +335,14 @@ main(int argc, char **argv)
       image->SetTranslationVector({0,0});
       printf("Found %d features in first frame\n", numFeatures);
 
-      // imageB = second frame
-      R2Image *imageB = new R2Image(*image);//new R2Image((inputPath + number + extension).c_str());
-
-      std::vector<int> featuresB = image->findAFeaturesOnB(imageB, image->SkyFeatures(), sqRadius);
-      imageB->SetSkyFeatures(featuresB);
+      R2Image *imageB = new R2Image(*image);
+      R2Image *tempImage;
+      std::vector<int> featuresB;
+      std::vector<double> Hvector;
 
       // Calculate H using DLTRANSAC between frame(1) and frame(2). reject bad tracks
       // double H[3][3];
       // image->SkyDLTRANSAC(imageB, H);
-      std::vector<double> Hvector;
       // TODO Hvector never set..
       // for (int i = 0; i < 3; i++)
       //   for (int j = 0; j < 3; j++)
@@ -355,40 +353,26 @@ main(int argc, char **argv)
       // Translation RANSAC
       image->SkyRANSAC(imageB);
       
+      // warp and blend sky in frame(1)
       R2Image *outputOrigImage = new R2Image(*image);
-      R2Image *tempImage;// = new R2Image(*imageB);
       outputOrigImage->MakeSkyBlackTranslation(skyImage);
-      // tempImage->MakeSkyBlackTranslation(skyImage);
 
+      // test to see if sky warps decently
       if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
         fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
         exit(-1);
       }
 
-      // TODO warp and blend sky image for frames(2,n)
-
-
-      // draw features in frame(1)// and frame(2)
+      // draw features in frame(1)
       for (int i = 0; i < image->SkyFeatures().size(); i++) {
         xa = image->SkyFeatures().at(i) / height;
         ya = image->SkyFeatures().at(i) % height;
         outputOrigImage->line(xa,xa,ya,ya,1,0,1);
       }
-      // for (int i = 0; i < featuresB.size(); i++) {
-      //   xb = featuresB.at(i) / height;
-      //   yb = featuresB.at(i) % height;
-      //   tempImage->line(xb,xb,yb,yb,1,0,1);
-      // }
-      // if (!tempImage->Write((outputPath + number + extension).c_str())) {
-      //   fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-      //   exit(-1);
-      // }
 
       printf("Finished frame 1\n");
 
-      // TODO deleting images deletes the feature positions as well (may need to calc H)
       R2Image *imageA;
-      // delete tempImage;
 
       // iterate through frames
       // imageA = frame(i-1)
@@ -409,7 +393,7 @@ main(int argc, char **argv)
         featuresB.clear();
         featuresB = imageA->findAFeaturesOnB(imageB, imageA->SkyFeatures(), sqRadius);
         imageB->SetSkyFeatures(featuresB);
-        Hvector.clear();
+        // Hvector.clear();
 
         // Calculate H between frame(i-1) and frame(i)
         // imageA->SkyDLTRANSAC(imageB, H);

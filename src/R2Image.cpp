@@ -1294,19 +1294,22 @@ SkyRANSAC(R2Image * imageB)
 		}
 	}
 
-	// sum distances of inliers
+	// Reject outliers
+	std::vector<int> newFeaturesB;
 	for (int i = 0; i < numFeatures; i++) {
 		if (inliers[i] == 1) { // inlier
 			xSum += dist[i][0];
 			ySum += dist[i][1];
+			newFeaturesB.push_back(featuresB.at(i));
 		}
 	}
 
+	// Calculate average translation vector
 	int avgX = (int)(xSum / numFeatures);
 	int avgY = (int)(ySum / numFeatures);
 
 	imageB->SetTranslationVector({avgX,avgY});
-	imageB->SetSkyFeatures(featuresB); // todo doesnt change?
+	imageB->SetSkyFeatures(newFeaturesB);
 
 	free(inliers);
 	free(temp);
