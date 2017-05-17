@@ -27,7 +27,8 @@ R2Image(void)
 	width(0),
 	height(0),
 	skyFeatures(std::vector<int>()),
-	h(std::vector<double>(9))
+	h(std::vector<double>(9)),
+	translationVector(std::vector<int>(2))
 {
 
 }
@@ -41,7 +42,8 @@ R2Image(const char *filename)
 	width(0),
 	height(0),
 	skyFeatures(std::vector<int>()),
-	h(std::vector<double>(9))
+	h(std::vector<double>(9)),
+	translationVector(std::vector<int>(2))
 {
 	// Read image
 	Read(filename);
@@ -56,7 +58,8 @@ R2Image(int width, int height)
 	width(width),
 	height(height),
 	skyFeatures(std::vector<int>()),
-	h(std::vector<double>(9))
+	h(std::vector<double>(9)),
+	translationVector(std::vector<int>(2))
 {
 	// Allocate pixels
 	pixels = new R2Pixel[npixels];
@@ -72,7 +75,8 @@ R2Image(int width, int height, const R2Pixel *p)
 	width(width),
 	height(height),
 	skyFeatures(std::vector<int>()),
-	h(std::vector<double>(9))
+	h(std::vector<double>(9)),
+	translationVector(std::vector<int>(2))
 {
 	// Allocate pixels
 	pixels = new R2Pixel[npixels];
@@ -92,7 +96,8 @@ R2Image(const R2Image& image)
 	width(image.width),
 	height(image.height),
 	skyFeatures(image.skyFeatures),
-	h(image.h)
+	h(image.h),
+	translationVector(image.translationVector)
 {
 
 
@@ -128,6 +133,7 @@ operator=(const R2Image& image)
 	height = image.height;
 	skyFeatures = image.skyFeatures;
 	h = image.h;
+	translationVector = image.translationVector;
 
 	// Allocate new pixels
 	pixels = new R2Pixel[npixels];
@@ -1229,7 +1235,7 @@ SkyRANSAC(R2Image * imageB)
 	const int numTrials = 800;
 	const int distThreshold = 4; // pixels
 
-								 // Set up random number generator
+	// Set up random number generator
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> dis(0, numFeatures - 1);
@@ -1247,7 +1253,8 @@ SkyRANSAC(R2Image * imageB)
 	for (int i = 0; i < numFeatures; i++) {
 		dist[i] = new int[2];
 	}
-	int xSum, ySum;
+	double xSum = 0.0;
+	double ySum = 0.0;
 
 	// initialize distance metric for all features
 	for (int i = 0; i < numFeatures; i++) {
@@ -1271,9 +1278,7 @@ SkyRANSAC(R2Image * imageB)
 
 			if (temp[i] == 1) {
 				count++;
-
 			}
-
 		}
 
 		//if the count is large enough
@@ -1298,17 +1303,20 @@ SkyRANSAC(R2Image * imageB)
 		}
 	}
 
-	int avgX = (int)xSum / numFeatures;
-	int avgY = (int)ySum / numFeatures;
+	int avgX = (int)(xSum / numFeatures);
+	int avgY = (int)(ySum / numFeatures);
 
 	tv.push_back(avgX);
 	tv.push_back(avgY);
 
-	imageB->SetTranslationVector(tv);
-	imageB->SetSkyFeatures(featuresB);
+	imageB->SetTranslationVector({avgX,avgY});
+	imageB->SetSkyFeatures(featuresB); // todo doesnt change?
 
 	free(inliers);
 	free(temp);
+	for (int i = 0; i < numFeatures; i++) {
+		delete [] dist[i];
+	}
 	free(dist);
 }
 
@@ -1714,16 +1722,15 @@ MakeSkyBlackTranslation(R2Image *newSky) {
 	double whitenessMax = 1.4;
 	double minBlue = 0.6;
 	R2Image* warpedSky = new R2Image(*newSky);
-	
+
+	assert(this->translationVector.size() == 2);
+	int dx = translationVector.at(0);
+	int dy = translationVector.at(1);
 
 	for (int x = 0; x < width; x++) {
 		for (int y = 0; y < height; y++) {
-
-			double x2 = x + this->translationVector.at(0);
-			double y2 = y + this->translationVector.at(1);
-
-			if (newSky->validPixel(x2, y2)) {
-				warpedSky->Pixel(x, y) = newSky->Pixel(x2, y2);
+			if (newSky->validPixel(x-dx, y-dy)) {
+				warpedSky->Pixel(x, y) = newSky->Pixel(x-dx, y-dy);
 			}
 		}
 	}

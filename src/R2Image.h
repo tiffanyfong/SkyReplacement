@@ -183,6 +183,12 @@ H(void) const
   return h;
 }
 
+inline std::vector<int> R2Image::
+TranslationVector(void) const
+{
+  return translationVector;
+}
+
 
 
 inline R2Pixel& R2Image::
