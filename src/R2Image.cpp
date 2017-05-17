@@ -1240,7 +1240,6 @@ SkyRANSAC(R2Image * imageB)
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> dis(0, numFeatures - 1);
 	std::vector<int> randIndexes;
-	std::vector<int> tv;
 
 	int bestNumInliers = 0;
 	//bool inliers[numFeatures];
@@ -1305,9 +1304,6 @@ SkyRANSAC(R2Image * imageB)
 
 	int avgX = (int)(xSum / numFeatures);
 	int avgY = (int)(ySum / numFeatures);
-
-	tv.push_back(avgX);
-	tv.push_back(avgY);
 
 	imageB->SetTranslationVector({avgX,avgY});
 	imageB->SetSkyFeatures(featuresB); // todo doesnt change?

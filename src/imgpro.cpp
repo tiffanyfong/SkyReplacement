@@ -322,10 +322,7 @@ main(int argc, char **argv)
       std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
       std::string extension = ".jpg";
 
-      R2Image * outputOrigImage = new R2Image(*image);
-
-
-      std::string number = "0000002"; // padding = 7 digits
+      std::string number;// = "0000002"; // padding = 7 digits
       const int height = image->Height();
       const double sigma = 2.0;
       const int numFeatures = 100; // 150
@@ -335,10 +332,11 @@ main(int argc, char **argv)
       // image = first frame
       std::vector<int> featuresA = image->getFeaturePositions(sigma, numFeatures, sqRadius);
       image->SetSkyFeatures(featuresA);
+      image->SetTranslationVector({0,0});
       printf("Found %d features in first frame\n", numFeatures);
 
       // imageB = second frame
-      R2Image *imageB = new R2Image((inputPath + number + extension).c_str());
+      R2Image *imageB = new R2Image(*image);//new R2Image((inputPath + number + extension).c_str());
 
       std::vector<int> featuresB = image->findAFeaturesOnB(imageB, image->SkyFeatures(), sqRadius);
       imageB->SetSkyFeatures(featuresB);
@@ -356,12 +354,11 @@ main(int argc, char **argv)
 
       // Translation RANSAC
       image->SkyRANSAC(imageB);
-
-
-
-      R2Image *tempImage = new R2Image(*imageB);
-      // outputOrigImage->MakeSkyBlack(skyImage);
-      tempImage->MakeSkyBlackTranslation(skyImage);
+      
+      R2Image *outputOrigImage = new R2Image(*image);
+      R2Image *tempImage;// = new R2Image(*imageB);
+      outputOrigImage->MakeSkyBlackTranslation(skyImage);
+      // tempImage->MakeSkyBlackTranslation(skyImage);
 
       if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
         fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
@@ -377,27 +374,27 @@ main(int argc, char **argv)
         ya = image->SkyFeatures().at(i) % height;
         outputOrigImage->line(xa,xa,ya,ya,1,0,1);
       }
-      for (int i = 0; i < featuresB.size(); i++) {
-        xb = featuresB.at(i) / height;
-        yb = featuresB.at(i) % height;
-        tempImage->line(xb,xb,yb,yb,1,0,1);
-      }
-      if (!tempImage->Write((outputPath + number + extension).c_str())) {
-        fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-        exit(-1);
-      }
+      // for (int i = 0; i < featuresB.size(); i++) {
+      //   xb = featuresB.at(i) / height;
+      //   yb = featuresB.at(i) % height;
+      //   tempImage->line(xb,xb,yb,yb,1,0,1);
+      // }
+      // if (!tempImage->Write((outputPath + number + extension).c_str())) {
+      //   fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
+      //   exit(-1);
+      // }
 
-      printf("SUCCESS DRAW FRAMES 1 and 2\n");
+      printf("Finished frame 1\n");
 
       // TODO deleting images deletes the feature positions as well (may need to calc H)
       R2Image *imageA;
-      delete tempImage;
+      // delete tempImage;
 
       // iterate through frames
       // imageA = frame(i-1)
       // imageB = frame(i)
 
-      for (int i = 3; i <= numFrames; i++) {
+      for (int i = 2; i <= numFrames; i++) {
         // SETUP
         // copy imageB into imageA via operator=
         imageA = imageB;
