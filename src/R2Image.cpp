@@ -1232,7 +1232,7 @@ SkyRANSAC(R2Image * imageB)
 	printf("PLZ BE >= 4   %d\n", numFeatures);
 
 	const int minInliers = 4;
-	const int numTrials = 800;
+	const int numTrials = 500;//800;
 	const int distThreshold = 4; // pixels
 
 	// Set up random number generator
@@ -1291,6 +1291,10 @@ SkyRANSAC(R2Image * imageB)
 		}
 		else if (count < minInliers) {
 			trial--; // repeat the process if below the min inlier threshold
+		}
+
+		if (bestNumInliers == numFeatures) {
+			break;
 		}
 	}
 
@@ -1722,12 +1726,18 @@ MakeSkyBlackTranslation(R2Image *newSky) {
 	double minBlue = 0.6;
 	R2Image* warpedSky = new R2Image(*newSky);
 
+	// todo scale size of sky image...
+	int skyWidth = newSky->Width();
+	int skyHeight = newSky->Height();
+
+	// width * (skyWidth/width);
+
 	assert(this->translationVector.size() == 2);
 	int dx = translationVector.at(0);
 	int dy = translationVector.at(1);
 
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
+	for (int x = 0; x < skyWidth; x++) {
+		for (int y = 0; y < skyHeight; y++) {
 			if (newSky->validPixel(x-dx, y-dy)) {
 				warpedSky->Pixel(x, y) = newSky->Pixel(x-dx, y-dy);
 			}
@@ -1741,32 +1751,52 @@ MakeSkyBlackTranslation(R2Image *newSky) {
 			double green = pix.Green();
 			double blue = pix.Blue();
 
+			double RBDiff = blue - red;
+			double GBDiff = blue - green;
+			double blueness = blue - minBlue;
+
+			double whiteness = red + green + blue;
+
+			double maxBlue = 1.0 - minBlue;
+
 			// too low - reject
 			// high  - accept
 			// middle - linear function 
 
 			// if BLUEEEE
+			// CONSIDER BRIGHTNESS
 			if (fabs(red - green) < 0.4
-				&& blue > red
-				&& blue > green
-				&& blue > minBlue) {
+				&& RBDiff > 0
+				&& GBDiff > 0
+				&& blueness > 0 
+				&& whiteness >= whitenessMin) {
 
-				// CONSIDER BRIGHTNESS
-				double whiteness = red + green + blue;
-				if (whiteness >= whitenessMin && whiteness <= whitenessMax) {
-					double skyWeight = (whiteness - whitenessMin) / (whitenessMax - whitenessMin);
-					Pixel(x, y) = warpedSky->Pixel(x, y)*skyWeight + Pixel(x, y)*(1.0 - skyWeight);
+				int skyPixX = (x-width/2) + skyWidth/2;
+				int skyPixY = (y-height/2) + skyHeight/2;
+
+				if (whiteness <= whitenessMax) {
+					double skyWeight = (blueness / maxBlue) * 
+									( RBDiff ) * ( GBDiff ) * 
+									(whiteness - whitenessMin) / (whitenessMax - whitenessMin);
+
+					Pixel(x, y) = warpedSky->Pixel(skyPixX, skyPixY)*skyWeight + Pixel(x, y)*(1.0 - skyWeight);
 				}
-				else if (whiteness > whitenessMax) {
-					Pixel(x, y) = warpedSky->Pixel(x, y);
+				else {
+					Pixel(x, y) = warpedSky->Pixel(skyPixX, skyPixY);
 				}
+
+				// double skyWeight =  (blueness / maxBlue) * 
+				// 					( RBDiff ) * ( GBDiff ) * 
+				// 					(whiteness - whitenessMin) / (whitenessMax - whitenessMin);
+
+				// Pixel(x, y) = warpedSky->Pixel(x, y)*skyWeight + Pixel(x, y)*(1.0 - skyWeight);
 			}
 		}
 	}
 
 	// replace newSky with warpedSky
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
+	for (int x = 0; x < skyWidth; x++) {
+		for (int y = 0; y < skyHeight; y++) {
 			newSky->SetPixel(x, y, warpedSky->Pixel(x, y));
 		}
 	}

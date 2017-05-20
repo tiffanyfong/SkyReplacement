@@ -317,9 +317,9 @@ main(int argc, char **argv)
       printf("NUMBER OF FRAMES: %d\n", numFrames);
       printf("input image name: %s\n", input_image_name);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/OUTPUTtest";
-      std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/skyVid/warpedSky";
+      std::string inputPath = "/Users/tmf/Desktop/skeleton/aitSunny/test";
+      std::string outputPath = "/Users/tmf/Desktop/skeleton/aitSunny/OUTPUTtest";
+      // std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/aitSunny/warpedSky";
       std::string extension = ".jpg";
 
       std::string number; // padding = 7 digits
@@ -358,16 +358,27 @@ main(int argc, char **argv)
       outputOrigImage->MakeSkyBlackTranslation(skyImage);
 
       // test to see if sky warps decently
-      if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
-        fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
-        exit(-1);
-      }
+      // if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
+      //   fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
+      //   exit(-1);
+      // }
 
-      // draw features in frame(1)
-      for (int i = 0; i < image->SkyFeatures().size(); i++) {
-        xa = image->SkyFeatures().at(i) / height;
-        ya = image->SkyFeatures().at(i) % height;
-        outputOrigImage->line(xa,xa,ya,ya,1,0,1);
+      // // draw features in frame(1)
+      // for (int pos : image->SkyFeatures()) {
+      //   xa = pos / height;
+      //   ya = pos % height;
+      //   outputOrigImage->line(xa,xa,ya,ya,1,0,1);
+      // }
+      // for (int i = 0; i < image->SkyFeatures().size(); i++) {
+      //   xa = image->SkyFeatures().at(i) / height;
+      //   ya = image->SkyFeatures().at(i) % height;
+      //   outputOrigImage->line(xa,xa,ya,ya,1,0,1);
+      // }
+
+      // Write output image
+      if (!outputOrigImage->Write(output_image_name)) {
+        fprintf(stderr, "Unable to read image from %s\n", output_image_name);
+        exit(-1);
       }
 
       printf("Finished frame 1\n");
@@ -414,18 +425,22 @@ main(int argc, char **argv)
         tempImage->MakeSkyBlackTranslation(skyImage);
 
         // test to see if sky warps decently
-        if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
-          fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-          exit(-1);
-        }
+        // if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
+        //   fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
+        //   exit(-1);
+        // }
 
-        // draw features in input image
-        for (int j = 0; j < featuresB.size(); j++) {
-          xb = featuresB.at(j) / height;
-          yb = featuresB.at(j) % height;
-
-          tempImage->line(xb,xb,yb,yb,1,0,1);
-        }
+        // // draw features in input image
+        // for (int feature : featuresB) {
+        //   xb = feature / height;
+        //   yb = feature % height;
+        //   tempImage->line(xb,xb,yb,yb,1,0,1);
+        // }
+        // for (int j = 0; j < featuresB.size(); j++) {
+        //   xb = featuresB.at(j) / height;
+        //   yb = featuresB.at(j) % height;
+        //   tempImage->line(xb,xb,yb,yb,1,0,1);
+        // }
 
         if (!tempImage->Write((outputPath + number + extension).c_str())) {
           fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
