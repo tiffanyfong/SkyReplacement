@@ -53,7 +53,6 @@ static char options[] =
 "  -fisheye \n"
 "  -matchTranslation <file:other_image>\n"
 "  -matchHomography <file:other_image>\n"
-"  -skyBlack <int:numFrames>\n"
 "  -skyReplace <file:other_image> <int:numFrames>\n";
 
 static void 
@@ -278,49 +277,44 @@ main(int argc, char **argv)
       image->blendOtherImageHomography(other_image);
       delete other_image;
     }
-
-    else if (!strcmp(*argv, "-skyBlack")) {
-      CheckOption(*argv, argc, 2);
-      const int numFrames = atoi(argv[1]);
-      argv += 2, argc -= 2;
-      printf("NUMBER OF FRAMES: %d\n", numFrames);
-
-      // std::string number;
-      // std::string inputPath = "/Users/tmf/Desktop/skeleton/skyVid/test";
-      // std::string outputPath = "/Users/tmf/Desktop/skeleton/skyVid/redshitOUTPUT";
-      // std::string extension = ".jpg";
-      // R2Image *imageB;
-
-      // image->MakeSkyBlack();
-
-      // for (int i = 2; i <= numFrames; i++) {
-      //   number = "0000000" + std::to_string(i);
-      //   number = number.substr(number.length()-7);
-      //   imageB = new R2Image((inputPath + number + extension).c_str());
-
-      //   imageB->MakeSkyBlack();
-
-      //   if (!imageB->Write((outputPath + number + extension).c_str())) {
-      //     fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-      //     exit(-1);
-      //   }
-      //   delete imageB;
-      // }
-    }
-
     else if (!strcmp(*argv, "-skyReplace")) {
       CheckOption(*argv, argc, 2);
       R2Image *skyImage = new R2Image(argv[1]);
       CheckOption(*argv, argc, 3);
       const int numFrames = atoi(argv[2]);
       argv += 3, argc -= 3;
+
       printf("NUMBER OF FRAMES: %d\n", numFrames);
       printf("input image name: %s\n", input_image_name);
+      printf("output image name: %s\n", output_image_name);
 
-      std::string inputPath = "/Users/tmf/Desktop/skeleton/aitSunny/test";
-      std::string outputPath = "/Users/tmf/Desktop/skeleton/aitSunny/OUTPUTtest";
-      // std::string warpedSkyPath = "/Users/tmf/Desktop/skeleton/aitSunny/warpedSky";
-      std::string extension = ".jpg";
+
+      // extract input and output filepaths
+      std::string sInput = input_image_name;
+      std::string sOutput = output_image_name;
+
+      int index = sInput.find_last_of(".");
+      if (index == -1) {
+        fprintf(stderr, "Unable to find extension in %s\n", input_image_name);
+        exit(-1);
+      }
+      std::string extension = sInput.substr(index);
+
+      index = sInput.find("0000001");
+      if (index == -1) {
+        fprintf(stderr, "Unable to find '0000001' (7-digit padding) in %s\n", input_image_name);
+        exit(-1);
+      }
+      std::string inputPath = sInput.substr(0,index);
+
+      index = sOutput.find("0000001");
+      if (index == -1) {
+        fprintf(stderr, "Unable to find '0000001' (7-digit padding) in %s\n", output_image_name);
+        exit(-1);
+      }
+      std::string outputPath = sOutput.substr(0,index);
+      
+
 
       std::string number; // padding = 7 digits
       const int height = image->Height();
@@ -355,25 +349,7 @@ main(int argc, char **argv)
       
       // warp and blend sky in frame(1)
       R2Image *outputOrigImage = new R2Image(*image);
-      outputOrigImage->MakeSkyBlackTranslation(skyImage);
-
-      // test to see if sky warps decently
-      // if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
-      //   fprintf(stderr, "Unable to read image from %s\n", (warpedSkyPath + number + extension).c_str());
-      //   exit(-1);
-      // }
-
-      // // draw features in frame(1)
-      // for (int pos : image->SkyFeatures()) {
-      //   xa = pos / height;
-      //   ya = pos % height;
-      //   outputOrigImage->line(xa,xa,ya,ya,1,0,1);
-      // }
-      // for (int i = 0; i < image->SkyFeatures().size(); i++) {
-      //   xa = image->SkyFeatures().at(i) / height;
-      //   ya = image->SkyFeatures().at(i) % height;
-      //   outputOrigImage->line(xa,xa,ya,ya,1,0,1);
-      // }
+      outputOrigImage->WarpSkyTranslation(skyImage);
 
       // Write output image
       if (!outputOrigImage->Write(output_image_name)) {
@@ -422,25 +398,7 @@ main(int argc, char **argv)
         imageA->SkyRANSAC(imageB);
 
         tempImage = new R2Image(*imageB);
-        tempImage->MakeSkyBlackTranslation(skyImage);
-
-        // test to see if sky warps decently
-        // if (!skyImage->Write((warpedSkyPath + number + extension).c_str())) {
-        //   fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());
-        //   exit(-1);
-        // }
-
-        // // draw features in input image
-        // for (int feature : featuresB) {
-        //   xb = feature / height;
-        //   yb = feature % height;
-        //   tempImage->line(xb,xb,yb,yb,1,0,1);
-        // }
-        // for (int j = 0; j < featuresB.size(); j++) {
-        //   xb = featuresB.at(j) / height;
-        //   yb = featuresB.at(j) % height;
-        //   tempImage->line(xb,xb,yb,yb,1,0,1);
-        // }
+        tempImage->WarpSkyTranslation(skyImage);
 
         if (!tempImage->Write((outputPath + number + extension).c_str())) {
           fprintf(stderr, "Unable to read image from %s\n", (outputPath + number + extension).c_str());

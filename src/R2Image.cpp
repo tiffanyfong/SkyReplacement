@@ -1229,7 +1229,11 @@ SkyRANSAC(R2Image * imageB)
 	std::vector<int> featuresB = imageB->SkyFeatures();
 
 	const int numFeatures = featuresA.size();
-	printf("PLZ BE >= 4   %d\n", numFeatures);
+	if (numFeatures <= 4) {
+		printf("WARNING: too few features to track\n");
+	}
+	printf("Features: %d\n", numFeatures);
+	
 
 	const int minInliers = 4;
 	const int numTrials = 500;//800;
@@ -1336,13 +1340,16 @@ SkyDLTRANSAC(R2Image * imageB, double H[3][3])
 	std::vector<int> featuresB = imageB->SkyFeatures();
 
 	const int numFeatures = featuresA.size();
-	printf("PLZ BE >= 4   %d\n", numFeatures);
+	if (numFeatures <= 4) {
+		printf("WARNING: too few features to track\n");
+	}
+	printf("Features: %d\n", numFeatures);
 
 	const int minInliers = 4;
 	const int numTrials = 800;
 	const int distThreshold = 4; // pixels
 
-								 // Set up random number generator
+	// Set up random number generator
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> dis(0, numFeatures - 1);
@@ -1584,25 +1591,9 @@ findAFeaturesOnB(R2Image * imageB, const std::vector<int> featuresA, const int s
 	return featuresB;
 }
 
-/*
-
-NOTES ON SKY DETECTION
-
-1. if green and red are similar and blue > (green and red), then it is "blue"
-
-
-2. "brightness" = whiteness of pixels. Sky is likely to be brighter than other things...
-
-
-make the sky black!
-
-FOR WHOLE VIDEO
-
-*/
-
 // input image = imageB with featuresB
 void R2Image::
-MakeSkyBlack(R2Image *newSky, const std::vector<int> featuresA) {
+WarpSky(R2Image *newSky, const std::vector<int> featuresA) {
 	double whitenessMin = 1.2;
 	double whitenessMax = 1.4;
 	double minBlue = 0.6;
@@ -1718,19 +1709,17 @@ MakeSkyBlack(R2Image *newSky, const std::vector<int> featuresA) {
 
 
 
-// input image = imageB with featuresB
+// replaces the sky in the input image and translate the sky
+// according to the translation vector (sky moves with image features)
 void R2Image::
-MakeSkyBlackTranslation(R2Image *newSky) {
+WarpSkyTranslation(R2Image *newSky) {
 	double whitenessMin = 1.2;
 	double whitenessMax = 1.4;
 	double minBlue = 0.6;
 	R2Image* warpedSky = new R2Image(*newSky);
 
-	// todo scale size of sky image...
 	int skyWidth = newSky->Width();
 	int skyHeight = newSky->Height();
-
-	// width * (skyWidth/width);
 
 	assert(this->translationVector.size() == 2);
 	int dx = translationVector.at(0);
@@ -1763,8 +1752,6 @@ MakeSkyBlackTranslation(R2Image *newSky) {
 			// high  - accept
 			// middle - linear function 
 
-			// if BLUEEEE
-			// CONSIDER BRIGHTNESS
 			if (fabs(red - green) < 0.4
 				&& RBDiff > 0
 				&& GBDiff > 0
@@ -1784,12 +1771,6 @@ MakeSkyBlackTranslation(R2Image *newSky) {
 				else {
 					Pixel(x, y) = warpedSky->Pixel(skyPixX, skyPixY);
 				}
-
-				// double skyWeight =  (blueness / maxBlue) * 
-				// 					( RBDiff ) * ( GBDiff ) * 
-				// 					(whiteness - whitenessMin) / (whitenessMax - whitenessMin);
-
-				// Pixel(x, y) = warpedSky->Pixel(x, y)*skyWeight + Pixel(x, y)*(1.0 - skyWeight);
 			}
 		}
 	}
