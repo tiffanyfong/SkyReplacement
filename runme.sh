@@ -19,7 +19,7 @@ popd
 
 # generate the result pictures
 
-src/imgpro origFrames/vid10000001.jpg OUTPUTframes/vid10000001.jpg \
--skyReplace grumpyCatSky.jpg 20
+src/imgpro INPUT0000001.jpg OUTPUT0000001.jpg \
+-skyReplace NEWSKY.jpg 20
 
 

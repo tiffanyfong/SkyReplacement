@@ -330,3 +330,9 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+
+
+## DO NOT IGNORE
+!exampleBefore.jpg
+!exampleAfter.jpg
